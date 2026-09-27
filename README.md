@@ -2,13 +2,14 @@
 
 Ein lokales Pass-and-play-Spiel als statische Web-Anwendung. Es benötigt keinen Server und keine Datenbank; der aktuelle Spielstand wird im Browser auf dem verwendeten Gerät gespeichert.
 
-## Umgesetzte Spielfunktionen
+## Bereits umgesetzt
 
-- 2 bis 12 Spieler mit frei benannten Allianzen; höchstens drei Mitglieder pro Allianz.
-- Mehrere Siegpunkttransfers pro Runde an mehrere Mitglieder derselben Allianz. Der abgebende Spieler behält mindestens einen Punkt.
-- Verdeckte Angriffsplanung am gemeinsamen Gerät. Die Ergebnisanzeige nennt nur besiegte Monster, den erfolgreichen Spieler und die Todesursache.
-- Drei aktive Monsterplätze, Monsterreserve, Waffen, Beute sowie Wertung nach den dokumentierten Regeln.
-- Reset-Schaltfläche „Neue Partie“ in der Kopfzeile mit Sicherheitsabfrage.
+- 2 bis 12 Spieler; frei benannte Allianzen mit höchstens drei Mitgliedern.
+- Mehrere Punktetransfers pro Runde an Mitglieder derselben Allianz; der Abgeber behält mindestens einen Siegpunkt.
+- Drei aktive Monsterplätze und eine Vorschau der nächsten bis zu drei Reserve-Monster.
+- Geheime Angriffsplanung; öffentlich werden nur Tötungen mit Spieler und Todesursache angezeigt.
+- Waffen, Beute, Monster-Nachrücken und lokale Speicherung.
+- Reset über „Neue Partie“ in der Kopfzeile.
 
 ## Lokal starten
 
@@ -23,4 +24,4 @@ Nach der Veröffentlichung ist das Spiel über die Pages-Adresse des Repositorys
 
 ## Spielstand
 
-Der Spielstand wird automatisch im lokalen Browserspeicher gesichert. Über „Neue Partie“ kann ein neues Spiel gestartet werden; nach Bestätigung wird der bisherige lokale Spielstand ersetzt.
+Der Spielstand wird automatisch im lokalen Browserspeicher gesichert. Über „Neue Partie“ in der Kopfzeile kann ein neues Spiel gestartet werden; nach Bestätigung wird der bisherige lokale Spielstand ersetzt.

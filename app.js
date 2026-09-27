@@ -173,7 +173,19 @@ function startGame() {
 
 function renderBoard() {
   const cards = state.field.map((monster, index) => monster ? monsterCard(monster, index, false) : '<article class="monster-card slot-empty" aria-label="Leerer Monsterplatz"><span>Leerer Platz</span></article>').join("");
-  return `<div class="battlefield">${cards || '<p class="board-empty">Das Schlachtfeld ist leer.</p>'}</div><div class="reserve-bar"><span class="reserve-label"><span class="reserve-icon" aria-hidden="true"></span>Monster in der Reserve</span><strong class="reserve-count">${String(state.reserve.length).padStart(2, "0")}</strong></div>`;
+  return `<div class="battlefield">${cards || '<p class="board-empty">Das Schlachtfeld ist leer.</p>'}</div>${renderNextReserve()}<div class="reserve-bar"><span class="reserve-label"><span class="reserve-icon" aria-hidden="true"></span>Monster in der Reserve</span><strong class="reserve-count">${String(state.reserve.length).padStart(2, "0")}</strong></div>`;
+}
+
+function renderNextReserve() {
+  const monsters = state.reserve.slice(0, 3);
+  const cards = monsters.length ? monsters.map((monster, index) => `
+    <article class="next-reserve-card" style="--art-color:${escapeHTML(monster.color)}">
+      <span class="next-reserve-index">${String(index + 1).padStart(2, "0")}</span>
+      <span class="next-reserve-art">${monsterArt(monster.color)}</span>
+      <strong>${escapeHTML(monster.name)}</strong>
+      <span class="next-reserve-points">${monster.points} SP</span>
+    </article>`).join("") : '<p class="next-reserve-empty">Keine Monster mehr in der Reserve.</p>';
+  return `<section class="next-reserve" aria-label="Nächste Monster aus der Reserve"><div class="board-heading"><h2>Nächste Reserve-Monster</h2><span>${monsters.length} sichtbar</span></div><div class="next-reserve-cards">${cards}</div></section>`;
 }
 
 function monsterCard(monster, index, selectable, selected = false, disabled = false) {
@@ -210,7 +222,7 @@ function renderTransfer() {
         <select class="select-input" name="to" aria-label="Punkte erhalten">${transferOptions.map((player) => `<option value="${player.id}">${escapeHTML(player.name)} · ${player.points} SP</option>`).join("")}</select>
         <input class="text-input" name="amount" type="number" min="1" value="1" aria-label="Anzahl Siegpunkte">
       </div>
-      <p class="form-note">Mehrere Transfers pro Runde sind erlaubt. Der abgebende Spieler muss mindestens einen Siegpunkt behalten.</p>
+      <p class="form-note">Du kannst mehrere Transfers an verschiedene Mitglieder derselben Allianz durchführen. Der Abgeber behält mindestens einen Siegpunkt.</p>
       <p class="transfer-message" id="transfer-message" role="status"></p>
       <button class="secondary-button" type="submit">Siegpunkte übertragen ${icon("arrow")}</button>
     </form>` : `<p class="form-note">Für diese Runde ist kein weiterer Allianztransfer möglich.</p>`;
@@ -252,7 +264,7 @@ function currentPlayer() {
 function renderAttackForm() {
   const player = currentPlayer();
   const choices = ["Dolch", ...player.weapons];
-  const content = `<section class="attack-form"><p class="eyebrow">Geheime Eingabe · Spieler ${state.plannerIndex + 1} von ${state.order.length}</p><h2>${escapeHTML(player.name)}, wähle deinen Angriff.</h2><p class="intro">Du hast ${player.points} Siegpunkte. Dein Dolch bleibt immer verfügbar.</p><div class="battlefield" id="target-field">${state.field.map((monster, index) => monsterCard(monster, index, true)).join("") || '<p class="board-empty">Keine Monster mehr auf dem Feld.</p>'}</div><div class="attack-tools"><label><span class="field-label">Waffe</span><select class="select-input weapon-select" id="weapon-choice">${choices.map((weapon) => `<option>${escapeHTML(weapon)}</option>`).join("")}</select></label><label><span class="field-label">Zweites Ziel · nur Schwerter</span><select class="select-input weapon-select" id="second-target"><option value="">Kein zweites Ziel</option>${state.field.map((monster, index) => `<option value="${index}">${index + 1} · ${escapeHTML(monster.name)}</option>`).join("")}</select></label></div><p class="attack-help" id="attack-help">Wähle ein Monster auf dem Schlachtfeld.</p><button class="primary-button attack-submit" type="button" data-action="submit-attack" disabled>Angriff verdeckt abgeben ${icon("arrow")}</button></section>`;
+  const content = `<section class="attack-form"><p class="eyebrow">Geheime Eingabe · Spieler ${state.plannerIndex + 1} von ${state.order.length}</p><h2>${escapeHTML(player.name)}, wähle deinen Angriff.</h2><p class="intro">Du hast ${player.points} Siegpunkte. Dein Dolch bleibt immer verfügbar.</p><div class="battlefield" id="target-field">${state.field.map((monster, index) => monsterCard(monster, index, true)).join("") || '<p class="board-empty">Keine Monster mehr auf dem Feld.</p>'}</div>${renderNextReserve()}<div class="attack-tools"><label><span class="field-label">Waffe</span><select class="select-input weapon-select" id="weapon-choice">${choices.map((weapon) => `<option>${escapeHTML(weapon)}</option>`).join("")}</select></label><label><span class="field-label">Zweites Ziel · nur Schwerter</span><select class="select-input weapon-select" id="second-target"><option value="">Kein zweites Ziel</option>${state.field.map((monster, index) => `<option value="${index}">${index + 1} · ${escapeHTML(monster.name)}</option>`).join("")}</select></label></div><p class="attack-help" id="attack-help">Wähle ein Monster auf dem Schlachtfeld.</p><button class="primary-button attack-submit" type="button" data-action="submit-attack" disabled>Angriff verdeckt abgeben ${icon("arrow")}</button></section>`;
   renderGameShell(content, "Private Eingabe", "Dein Zug", "Die anderen Spieler sehen weder Ziel noch Waffe.");
   updateAttackHelp();
 }
