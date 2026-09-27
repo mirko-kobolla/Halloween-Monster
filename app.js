@@ -322,10 +322,17 @@ function resolveRound() {
     });
     const due = state.pending.filter((effect) => effect.playerId === player.id && effect.dueRound <= state.round);
     state.pending = state.pending.filter((effect) => !due.includes(effect));
-    due.forEach((effect) => dealDamage(effect.slot, effect.damage, player, "Dynamit"));
+    due.forEach((effect) => {
+      const targetSlot = state.field.findIndex((monster) => monster && !monster.empty && monster.id === effect.targetMonsterId);
+      if (targetSlot >= 0) dealDamage(targetSlot, effect.damage, player, "Dynamit");
+      else addLog(`${player.name}s Dynamit verpufft, weil das Ziel vorher besiegt wurde.`);
+    });
     if (attack.weapon === "Dynamit") {
-      state.pending.push({ playerId: player.id, slot: attack.targets[0], damage: 10, dueRound: state.round + 1 });
-      addLog(`${player.name} platziert Dynamit. Es explodiert vor dem nächsten eigenen Angriff.`);
+      const target = monsterAt(attack.targets[0]);
+      if (target) {
+        state.pending.push({ playerId: player.id, targetMonsterId: target.id, damage: 10, dueRound: state.round + 1 });
+        addLog(`${player.name} platziert Dynamit an ${target.name}. Es explodiert vor dem nächsten eigenen Angriff.`);
+      }
     } else {
       const targets = attack.targets;
       if (attack.weapon === "Gekreuzte Schwerter") {
@@ -339,8 +346,8 @@ function resolveRound() {
         if (attack.weapon === "Eis" && monster) monster.frozenBy = player.id;
       }
     }
-    state.field.forEach((monster) => {
-      if (monster.poison > 0) {
+    state.field.forEach((monster, slot) => {
+      if (monster?.poison > 0) {
         monster.poison -= 1;
         monster.hp -= 1;
         addLog(`Gift entzieht ${monster.name} 1 Lebenspunkt.`);
