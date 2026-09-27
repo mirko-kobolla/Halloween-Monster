@@ -156,7 +156,7 @@ function startGame() {
   state = {
     round: 1,
     phase: "transfer",
-    players: names.map((player) => ({ id: id(), ...player, points: 5, weapons: [], talers: 0, transferUsed: false })),
+    players: names.map((player) => ({ id: id(), ...player, points: 5, weapons: [], talers: 0 })),
     field: shuffledCards.slice(0, 3),
     reserve: shuffledCards.slice(3),
     pending: [],
@@ -202,7 +202,7 @@ function renderGameShell(content, eyebrow, title, subtitle = "") {
 
 function renderTransfer() {
   const playersWithAlliance = state.players.filter((player) => allianceKey(player.alliance));
-  const transferOptions = playersWithAlliance.filter((player) => !player.transferUsed);
+  const transferOptions = playersWithAlliance;
   const transferForm = playersWithAlliance.length >= 2 && transferOptions.length >= 2 ? `
     <form id="transfer-form">
       <div class="transfer-form">
@@ -210,10 +210,11 @@ function renderTransfer() {
         <select class="select-input" name="to" aria-label="Punkte erhalten">${transferOptions.map((player) => `<option value="${player.id}">${escapeHTML(player.name)} · ${player.points} SP</option>`).join("")}</select>
         <input class="text-input" name="amount" type="number" min="1" value="1" aria-label="Anzahl Siegpunkte">
       </div>
+      <p class="form-note">Mehrere Transfers pro Runde sind erlaubt. Der abgebende Spieler muss mindestens einen Siegpunkt behalten.</p>
       <p class="transfer-message" id="transfer-message" role="status"></p>
       <button class="secondary-button" type="submit">Siegpunkte übertragen ${icon("arrow")}</button>
     </form>` : `<p class="form-note">Für diese Runde ist kein weiterer Allianztransfer möglich.</p>`;
-  const content = `<div class="game-layout"><section><div class="board-heading"><h2>Schlachtfeld</h2><span>Angriffsziele</span></div>${renderBoard()}</section><aside class="sidebar"><section class="side-section"><div class="side-title"><h2>Punktestand</h2><span>${state.players.length} Spieler</span></div><div class="score-list">${renderScoreList()}</div></section><section class="side-section"><div class="side-title"><h2>Allianztransfer</h2><span>vor den Angriffen</span></div><div class="transfer-list">${state.players.map((player) => `<div class="transfer-player"><span>${escapeHTML(player.name)}${player.transferUsed ? " · übertragen" : ""}</span><strong>${player.points}</strong></div>`).join("")}</div>${transferForm}</section><div class="sidebar-actions"><button class="primary-button" type="button" data-action="start-planning">Angriffe planen ${icon("arrow")}</button></div></aside></div>`;
+  const content = `<div class="game-layout"><section><div class="board-heading"><h2>Schlachtfeld</h2><span>Angriffsziele</span></div>${renderBoard()}</section><aside class="sidebar"><section class="side-section"><div class="side-title"><h2>Punktestand</h2><span>${state.players.length} Spieler</span></div><div class="score-list">${renderScoreList()}</div></section><section class="side-section"><div class="side-title"><h2>Allianztransfer</h2><span>vor den Angriffen</span></div><div class="transfer-list">${state.players.map((player) => `<div class="transfer-player"><span>${escapeHTML(player.name)}</span><strong>${player.points}</strong></div>`).join("")}</div>${transferForm}</section><div class="sidebar-actions"><button class="primary-button" type="button" data-action="start-planning">Angriffe planen ${icon("arrow")}</button></div></aside></div>`;
   renderGameShell(content, "Rundenbeginn", "Punkte teilen, dann angreifen", "Allianzmitglieder können vor den Angriffen Siegpunkte übertragen.");
 }
 
@@ -307,7 +308,7 @@ function killMonster(monster, slot, player, cause) {
     else player.weapons.push(item);
     rewards.push(item);
   });
-  addLog(`${player.name} hat ${monster.name} besiegt.`, true);
+  addLog(`${player.name} hat ${monster.name} mit ${cause} besiegt.`, true);
 }
 
 function dealDamage(slot, amount, player, cause) {
@@ -382,7 +383,6 @@ function renderResults() {
 
 function nextRound() {
   state.round += 1;
-  state.players.forEach((player) => { player.transferUsed = false; });
   state.phase = state.field.some((monster) => monster && !monster.empty) || state.reserve.length ? "transfer" : "ended";
   saveGame();
   render();
@@ -421,12 +421,9 @@ function transferPoints(form) {
   const fail = (text) => { if (error) error.textContent = text; };
   if (!sender || !receiver || sender.id === receiver.id) return fail("Wähle zwei verschiedene Spieler aus.");
   if (!allianceKey(sender.alliance) || allianceKey(sender.alliance) !== allianceKey(receiver.alliance)) return fail("Punkte können nur innerhalb derselben Allianz übertragen werden.");
-  if (sender.transferUsed || receiver.transferUsed) return fail("Jeder Spieler kann pro Runde nur an einem Transfer teilnehmen.");
   if (!Number.isInteger(amount) || amount < 1 || sender.points - amount < 1) return fail("Der abgebende Spieler muss mindestens einen Siegpunkt behalten.");
   sender.points -= amount;
   receiver.points += amount;
-  sender.transferUsed = true;
-  receiver.transferUsed = true;
   saveGame();
   render();
 }
