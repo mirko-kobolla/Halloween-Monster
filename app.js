@@ -18,14 +18,22 @@ const WEAPONS = {
   "Granate": { damage: 6 },
   "Dynamit": { damage: 10 }
 };
-const ALLIANCES = ["Keine", "Allianz A", "Allianz B", "Allianz C", "Allianz D"];
 const app = document.querySelector("#app");
-let draftPlayers = [{ name: "", alliance: "Keine" }, { name: "", alliance: "Keine" }];
+let draftPlayers = [{ name: "", alliance: "" }, { name: "", alliance: "" }];
 let state = loadGame();
 let message = "";
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+}
+
+function allianceName(value) {
+  const name = String(value ?? "").trim();
+  return name.toLocaleLowerCase("de-DE") === "keine" ? "" : name;
+}
+
+function allianceKey(value) {
+  return allianceName(value).toLocaleLowerCase("de-DE");
 }
 
 function loadGame() {
@@ -89,7 +97,7 @@ function renderLobby() {
     <div class="player-row">
       <span class="player-number">${String(index + 1).padStart(2, "0")}</span>
       <input class="text-input" type="text" maxlength="22" autocomplete="off" placeholder="Spielername" aria-label="Name von Spieler ${index + 1}" data-player-name="${index}" value="${escapeHTML(player.name)}">
-      <select class="select-input" aria-label="Allianz für Spieler ${index + 1}" data-player-alliance="${index}">${ALLIANCES.map((alliance) => `<option${player.alliance === alliance ? " selected" : ""}>${alliance}</option>`).join("")}</select>
+      <input class="text-input" type="text" maxlength="22" autocomplete="off" placeholder="Ohne Allianz" aria-label="Allianzname für Spieler ${index + 1}" data-player-alliance="${index}" value="${escapeHTML(allianceName(player.alliance))}">
       <button class="remove-player" type="button" data-action="remove-player" data-index="${index}" aria-label="Spieler ${index + 1} entfernen" ${draftPlayers.length <= 2 ? "disabled" : ""}>${icon("x")}</button>
     </div>`).join("");
   const sample = [MONSTERS[1], MONSTERS[5], MONSTERS[6]];
@@ -104,7 +112,7 @@ function renderLobby() {
           <div class="player-list">${rows}</div>
           <button class="add-player" type="button" data-action="add-player" ${draftPlayers.length >= 12 ? "disabled" : ""}>${icon("plus")} Spieler hinzufügen</button>
           ${message ? `<p class="error-banner" role="alert">${escapeHTML(message)}</p>` : ""}
-          <p class="form-note">Allianzen teilen die Endwertung. Ein Spieler kann nur einer Allianz angehören; pro Allianz sind höchstens drei Spieler möglich.</p>
+          <p class="form-note">Gib für Mitglieder derselben Allianz denselben Namen ein. Das Allianzfeld kann leer bleiben.</p>
           <button class="primary-button setup-submit" type="submit">Spiel vorbereiten ${icon("arrow")}</button>
           <p class="setup-note">2 bis 12 Spieler · Start mit je 5 Siegpunkten</p>
         </form>
@@ -128,18 +136,9 @@ function createMonster(source) {
 }
 
 function startGame() {
-  const names = draftPlayers.map((player, index) => ({ name: player.name.trim() || `Spieler ${index + 1}`, alliance: player.alliance }));
+  const names = draftPlayers.map((player, index) => ({ name: player.name.trim() || `Spieler ${index + 1}`, alliance: allianceName(player.alliance) }));
   if (names.length < 2 || names.length > 12) {
     message = "Es können 2 bis 12 Spieler teilnehmen.";
-    renderLobby();
-    return;
-  }
-  const allianceCounts = {};
-  names.forEach((player) => {
-    if (player.alliance !== "Keine") allianceCounts[player.alliance] = (allianceCounts[player.alliance] ?? 0) + 1;
-  });
-  if (Object.values(allianceCounts).some((count) => count > 3)) {
-    message = "Eine Allianz darf höchstens drei Mitglieder haben.";
     renderLobby();
     return;
   }
@@ -181,7 +180,10 @@ function monsterCard(monster, index, selectable, selected = false, disabled = fa
 
 function renderScoreList() {
   const sorted = [...state.players].sort((left, right) => right.points - left.points);
-  return sorted.map((player, index) => `<div class="score-row${state.currentPlanner === player.id ? " current" : ""}"><span class="score-index">${String(index + 1).padStart(2, "0")}</span><span class="score-name">${escapeHTML(player.name)}${player.alliance !== "Keine" ? `<small class="score-alliance">${escapeHTML(player.alliance)}</small>` : ""}</span><strong class="score-value">${player.points}</strong></div>`).join("");
+  return sorted.map((player, index) => {
+    const alliance = allianceName(player.alliance);
+    return `<div class="score-row${state.currentPlanner === player.id ? " current" : ""}"><span class="score-index">${String(index + 1).padStart(2, "0")}</span><span class="score-name">${escapeHTML(player.name)}${alliance ? `<small class="score-alliance">${escapeHTML(alliance)}</small>` : ""}</span><strong class="score-value">${player.points}</strong></div>`;
+  }).join("");
 }
 
 function renderGameShell(content, eyebrow, title, subtitle = "") {
@@ -189,7 +191,7 @@ function renderGameShell(content, eyebrow, title, subtitle = "") {
 }
 
 function renderTransfer() {
-  const playersWithAlliance = state.players.filter((player) => player.alliance !== "Keine");
+  const playersWithAlliance = state.players.filter((player) => allianceKey(player.alliance));
   const transferOptions = playersWithAlliance.filter((player) => !player.transferUsed);
   const transferForm = playersWithAlliance.length >= 2 && transferOptions.length >= 2 ? `
     <form id="transfer-form">
@@ -295,7 +297,7 @@ function killMonster(monster, slot, player, cause) {
     else player.weapons.push(item);
     rewards.push(item);
   });
-  addLog(`${player.name} besiegt ${monster.name} mit ${cause}, erhält ${monster.points} Siegpunkte und ${rewards.length ? rewards.join(", ") : "keine Beute"}.`, true);
+  addLog(`${player.name} hat ${monster.name} besiegt.`, true);
 }
 
 function dealDamage(slot, amount, player, cause) {
@@ -362,9 +364,10 @@ function resolveRound() {
 }
 
 function renderResults() {
-  const rows = state.resultsLog.length ? state.resultsLog.map((result) => `<div class="result-item${result.death ? " death" : ""}"><span class="result-copy">${escapeHTML(result.message)}</span>${result.death ? '<span class="result-tag">MONSTER BESIEGT</span>' : ""}</div>`).join("") : '<div class="result-item"><span class="result-copy">Keine Angriffe konnten ausgeführt werden.</span></div>';
-  const content = `<div class="resolve-screen"><p class="eyebrow">Runde ${state.round} · öffentliches Ergebnis</p><h2>Die Angriffe sind aufgedeckt.</h2><div class="result-list">${rows}</div><div class="resolve-actions"><button class="primary-button" type="button" data-action="next-round">Weiter zur nächsten Runde ${icon("arrow")}</button></div></div>`;
-  renderGameShell(content, "Kampfergebnis", "Das Schlachtfeld verändert sich", "Besiegte Monster wurden ersetzt und Belohnungen vergeben.");
+  const deaths = state.resultsLog.filter((result) => result.death);
+  const rows = deaths.length ? deaths.map((result) => `<div class="result-item death"><span class="result-copy">${escapeHTML(result.message)}</span><span class="result-tag">MONSTER BESIEGT</span></div>`).join("") : '<div class="result-item"><span class="result-copy">In dieser Runde wurde kein Monster besiegt.</span></div>';
+  const content = `<div class="resolve-screen"><p class="eyebrow">Runde ${state.round} · öffentliche Tötungen</p><h2>Wer hat ein Monster besiegt?</h2><div class="result-list">${rows}</div><div class="resolve-actions"><button class="primary-button" type="button" data-action="next-round">Weiter zur nächsten Runde ${icon("arrow")}</button></div></div>`;
+  renderGameShell(content, "Kampfergebnis", "Das Schlachtfeld verändert sich", "Angezeigt werden nur besiegte Monster und ihre Sieger.");
 }
 
 function nextRound() {
@@ -378,14 +381,16 @@ function nextRound() {
 function finalScores() {
   const alliancePoints = new Map();
   state.players.forEach((player) => {
-    if (player.alliance !== "Keine") {
-      alliancePoints.set(player.alliance, (alliancePoints.get(player.alliance) ?? 0) + player.points);
+    const key = allianceKey(player.alliance);
+    if (key) {
+      alliancePoints.set(key, (alliancePoints.get(key) ?? 0) + player.points);
     }
   });
   return state.players.map((player) => {
-    if (player.alliance === "Keine") return { ...player, final: player.points };
-    const members = state.players.filter((member) => member.alliance === player.alliance).length;
-    const average = alliancePoints.get(player.alliance) / members;
+    const key = allianceKey(player.alliance);
+    if (!key) return { ...player, final: player.points };
+    const members = state.players.filter((member) => allianceKey(member.alliance) === key).length;
+    const average = alliancePoints.get(key) / members;
     return { ...player, final: Math.ceil(average * 10) / 10 };
   }).sort((left, right) => right.final - left.final);
 }
@@ -394,7 +399,7 @@ function renderEnd() {
   const scores = finalScores();
   const best = scores[0]?.final;
   const winners = scores.filter((player) => player.final === best);
-  app.innerHTML = `<section class="end-screen"><p class="eyebrow">Spiel beendet</p><h1>${winners.length > 1 ? "Gleichstand." : `Sieg für <em>${escapeHTML(winners[0].name)}</em>.`}</h1><p>${winners.length > 1 ? "Mehrere Spieler teilen sich den ersten Platz." : "Das Schlachtfeld ist leer."}</p><div class="winner-list">${scores.map((player) => `<div class="winner-row"><strong>${escapeHTML(player.name)}${player.alliance !== "Keine" ? ` · ${escapeHTML(player.alliance)}` : ""}</strong><span>${player.final} SP</span></div>`).join("")}</div><button class="primary-button" type="button" data-action="new-game">Neues Spiel vorbereiten ${icon("arrow")}</button></section>`;
+  app.innerHTML = `<section class="end-screen"><p class="eyebrow">Spiel beendet</p><h1>${winners.length > 1 ? "Gleichstand." : `Sieg für <em>${escapeHTML(winners[0].name)}</em>.`}</h1><p>${winners.length > 1 ? "Mehrere Spieler teilen sich den ersten Platz." : "Das Schlachtfeld ist leer."}</p><div class="winner-list">${scores.map((player) => `<div class="winner-row"><strong>${escapeHTML(player.name)}${allianceName(player.alliance) ? ` · ${escapeHTML(allianceName(player.alliance))}` : ""}</strong><span>${player.final} SP</span></div>`).join("")}</div><button class="primary-button" type="button" data-action="new-game">Neues Spiel vorbereiten ${icon("arrow")}</button></section>`;
 }
 
 function transferPoints(form) {
@@ -405,7 +410,7 @@ function transferPoints(form) {
   const error = document.querySelector("#transfer-message");
   const fail = (text) => { if (error) error.textContent = text; };
   if (!sender || !receiver || sender.id === receiver.id) return fail("Wähle zwei verschiedene Spieler aus.");
-  if (sender.alliance === "Keine" || sender.alliance !== receiver.alliance) return fail("Punkte können nur innerhalb derselben Allianz übertragen werden.");
+  if (!allianceKey(sender.alliance) || allianceKey(sender.alliance) !== allianceKey(receiver.alliance)) return fail("Punkte können nur innerhalb derselben Allianz übertragen werden.");
   if (sender.transferUsed || receiver.transferUsed) return fail("Jeder Spieler kann pro Runde nur an einem Transfer teilnehmen.");
   if (!Number.isInteger(amount) || amount < 1 || sender.points - amount < 1) return fail("Der abgebende Spieler muss mindestens einen Siegpunkt behalten.");
   sender.points -= amount;
@@ -418,10 +423,10 @@ function transferPoints(form) {
 
 app.addEventListener("input", (event) => {
   if (event.target.matches("[data-player-name]")) draftPlayers[Number(event.target.dataset.playerName)].name = event.target.value;
+  if (event.target.matches("[data-player-alliance]")) draftPlayers[Number(event.target.dataset.playerAlliance)].alliance = event.target.value;
 });
 
 app.addEventListener("change", (event) => {
-  if (event.target.matches("[data-player-alliance]")) draftPlayers[Number(event.target.dataset.playerAlliance)].alliance = event.target.value;
   if (event.target.matches("#weapon-choice")) updateAttackHelp();
   if (event.target.matches("#second-target")) {
     const second = event.target.value;
@@ -457,7 +462,7 @@ app.addEventListener("click", (event) => {
   if (!actionElement) return;
   const action = actionElement.dataset.action;
   if (action === "add-player" && draftPlayers.length < 12) {
-    draftPlayers.push({ name: "", alliance: "Keine" });
+    draftPlayers.push({ name: "", alliance: "" });
     message = "";
     renderLobby();
     document.querySelector(`[data-player-name="${draftPlayers.length - 1}"]`)?.focus();
@@ -468,7 +473,7 @@ app.addEventListener("click", (event) => {
     if (!state || window.confirm("Ein neues Spiel starten? Der bisherige Spielstand auf diesem Gerät wird ersetzt.")) {
       state = null;
       localStorage.removeItem(STORAGE_KEY);
-      draftPlayers = [{ name: "", alliance: "Keine" }, { name: "", alliance: "Keine" }];
+      draftPlayers = [{ name: "", alliance: "" }, { name: "", alliance: "" }];
       message = "";
       renderLobby();
     }
