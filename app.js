@@ -467,7 +467,7 @@ app.addEventListener("submit", (event) => {
   }
 });
 
-app.addEventListener("click", (event) => {
+document.addEventListener("click", (event) => {
   const actionElement = event.target.closest("[data-action]");
   if (!actionElement) return;
   const action = actionElement.dataset.action;
