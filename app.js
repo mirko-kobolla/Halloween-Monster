@@ -112,7 +112,7 @@ function renderLobby() {
           <div class="player-list">${rows}</div>
           <button class="add-player" type="button" data-action="add-player" ${draftPlayers.length >= 12 ? "disabled" : ""}>${icon("plus")} Spieler hinzufügen</button>
           ${message ? `<p class="error-banner" role="alert">${escapeHTML(message)}</p>` : ""}
-          <p class="form-note">Gib für Mitglieder derselben Allianz denselben Namen ein. Das Allianzfeld kann leer bleiben.</p>
+          <p class="form-note">Gib für Mitglieder derselben Allianz denselben Namen ein. Eine Allianz darf höchstens drei Spieler haben; das Feld kann leer bleiben.</p>
           <button class="primary-button setup-submit" type="submit">Spiel vorbereiten ${icon("arrow")}</button>
           <p class="setup-note">2 bis 12 Spieler · Start mit je 5 Siegpunkten</p>
         </form>
@@ -139,6 +139,16 @@ function startGame() {
   const names = draftPlayers.map((player, index) => ({ name: player.name.trim() || `Spieler ${index + 1}`, alliance: allianceName(player.alliance) }));
   if (names.length < 2 || names.length > 12) {
     message = "Es können 2 bis 12 Spieler teilnehmen.";
+    renderLobby();
+    return;
+  }
+  const allianceCounts = new Map();
+  names.forEach((player) => {
+    const key = allianceKey(player.alliance);
+    if (key) allianceCounts.set(key, (allianceCounts.get(key) ?? 0) + 1);
+  });
+  if ([...allianceCounts.values()].some((count) => count > 3)) {
+    message = "Jede Allianz darf höchstens drei Mitglieder haben.";
     renderLobby();
     return;
   }
