@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171a16">
+  <meta name="description" content="Halloween Monster: ein lokales Pass-and-play-Spiel für die Klasse.">
+  <title>Halloween Monster</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Halloween Monster Startseite">
+      <span class="brand-mark" aria-hidden="true">HM</span>
+      <span class="brand-name">Halloween <b>Monster</b></span>
+    </a>
+    <div class="topbar-actions">
+      <span class="save-indicator"><span class="save-dot"></span><span id="save-status">Nur auf diesem Gerät</span></span>
+      <button class="icon-button" type="button" data-action="new-game" title="Neues Spiel" aria-label="Neues Spiel">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+  </header>
+  <main id="app" class="app-shell" aria-live="polite"></main>
+  <footer class="page-footer"><span>HALLOWEEN MONSTER</span><span>Pass-and-play · Ein Gerät · Eine Klasse</span></footer>
+</body>
+</html>
