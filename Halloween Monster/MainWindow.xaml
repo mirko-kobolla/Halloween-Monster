@@ -1,0 +1,25 @@
+﻿<Window x:Class="Halloween_Monster.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Halloween_Monster"
+        mc:Ignorable="d"
+        Title="Halloween Monster" Height="450" Width="800">
+    <StackPanel Margin="10">
+        <Label Height="30">Spieler eingeben:</Label>
+        <TextBox>Spieler 1</TextBox>
+        <TextBox>Spieler 2</TextBox>
+        <TextBox>Spieler 3</TextBox>
+        <TextBox>Spieler 4</TextBox>
+        <TextBox>Spieler 5</TextBox>
+        <TextBox>Spieler 6</TextBox>
+        <TextBox>Spieler 7</TextBox>
+        <TextBox>Spieler 8</TextBox>
+        <TextBox>Spieler 9</TextBox>
+        <TextBox>Spieler 10</TextBox>
+        <TextBox>Spieler 11</TextBox>
+        <TextBox>Spieler 12</TextBox>
+        <Button Click="Button_Click" Margin="20">Spielstarten</Button>
+    </StackPanel>
+</Window>

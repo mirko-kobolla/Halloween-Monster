@@ -100,7 +100,7 @@ function renderLobby() {
       <input class="text-input" type="text" maxlength="22" autocomplete="off" placeholder="Ohne Allianz" aria-label="Allianzname für Spieler ${index + 1}" data-player-alliance="${index}" value="${escapeHTML(allianceName(player.alliance))}">
       <button class="remove-player" type="button" data-action="remove-player" data-index="${index}" aria-label="Spieler ${index + 1} entfernen" ${draftPlayers.length <= 2 ? "disabled" : ""}>${icon("x")}</button>
     </div>`).join("");
-  const sample = [MONSTERS[1], MONSTERS[5], MONSTERS[6]];
+  const sample = MONSTERS.slice(0, 3);
   app.innerHTML = `
     <div class="setup-layout">
       <section class="setup-copy">
@@ -113,18 +113,19 @@ function renderLobby() {
           <button class="add-player" type="button" data-action="add-player" ${draftPlayers.length >= 12 ? "disabled" : ""}>${icon("plus")} Spieler hinzufügen</button>
           ${message ? `<p class="error-banner" role="alert">${escapeHTML(message)}</p>` : ""}
           <p class="form-note">Gib für Mitglieder derselben Allianz denselben Namen ein. Eine Allianz darf höchstens drei Spieler haben; das Feld kann leer bleiben.</p>
+          <label class="test-mode-toggle"><input id="test-mode" type="checkbox"><span><strong>Testmodus</strong><small>Zeigt aktuelle Monsterlebenspunkte im Spiel.</small></span></label>
           <button class="primary-button setup-submit" type="submit">Spiel vorbereiten ${icon("arrow")}</button>
           <p class="setup-note">2 bis 12 Spieler · Start mit je 5 Siegpunkten</p>
         </form>
       </section>
       <aside class="setup-aside">
         <p class="eyebrow">Das Spielfeld</p>
-        <h2>Drei Plätze.<br>Neun aus der Reserve.</h2>
+        <h2>Drei Plätze.<br>Sechs aus der Reserve.</h2>
         <p class="intro">Nur die Monster auf dem Schlachtfeld sind Ziele. Stirbt eines, rückt das nächste sofort nach.</p>
         <div class="field-preview">
           <div class="preview-top"><span>Aktive Monster</span><span>3 Plätze</span></div>
           <div class="preview-monsters">${sample.map((monster) => `<div class="preview-monster" style="--art-color:${monster.color}"><span class="preview-art">${monsterArt(monster.color)}</span><span><strong>${monster.name}</strong><small>Beute: ${monster.loot.join(", ")}</small></span><span class="preview-hp">${monster.points} ♥</span></div>`).join("")}</div>
-          <div class="reserve-preview"><span>Monster in der Reserve</span><strong class="reserve-count">09</strong></div>
+          <div class="reserve-preview"><span>Monster in der Reserve</span><strong class="reserve-count">06</strong></div>
         </div>
         <div class="rules-strip"><span><i></i>Dolch immer verfügbar</span><span><i></i>Spezialwaffen als Beute</span><span><i></i>Spielstand lokal gespeichert</span></div>
       </aside>
@@ -136,6 +137,7 @@ function createMonster(source) {
 }
 
 function startGame() {
+  const testMode = document.querySelector("#test-mode")?.checked ?? false;
   const names = draftPlayers.map((player, index) => ({ name: player.name.trim() || `Spieler ${index + 1}`, alliance: allianceName(player.alliance) }));
   if (names.length < 2 || names.length > 12) {
     message = "Es können 2 bis 12 Spieler teilnehmen.";
@@ -152,13 +154,14 @@ function startGame() {
     renderLobby();
     return;
   }
-  const shuffledCards = shuffle(Array.from({ length: 12 }, () => createMonster(MONSTERS[Math.floor(Math.random() * MONSTERS.length)])));
+  const monsters = MONSTERS.map(createMonster);
   state = {
     round: 1,
     phase: "transfer",
+    testMode,
     players: names.map((player) => ({ id: id(), ...player, points: 5, weapons: [], talers: 0 })),
-    field: shuffledCards.slice(0, 3),
-    reserve: shuffledCards.slice(3),
+    field: monsters.slice(0, 3),
+    reserve: monsters.slice(3),
     pending: [],
     order: [],
     attacks: {},
@@ -194,7 +197,7 @@ function monsterCard(monster, index, selectable, selected = false, disabled = fa
   const clickAttrs = selectable && !disabled ? `data-action="select-target" data-index="${index}"` : "";
   const frozen = monster.frozenBy ? " · Eis" : "";
   return `<article class="${classNames}" style="--art-color:${escapeHTML(monster.color)}" ${clickAttrs ? `role="button" tabindex="0" ${clickAttrs}` : ""}>
-    <div class="monster-card-top"><span class="monster-position">${String(index + 1).padStart(2, "0")}${frozen}</span><span class="monster-hp">${monster.hp} ♥</span></div>
+    <div class="monster-card-top"><span class="monster-position">${String(index + 1).padStart(2, "0")}${frozen}</span>${state.testMode ? `<span class="monster-hp">${monster.hp} ♥</span>` : ""}</div>
     <div class="monster-art">${monsterArt(monster.color)}</div>
     <div class="monster-card-bottom"><h3 class="monster-name">${escapeHTML(monster.name)}</h3><span class="monster-reward"><b>${monster.points} SP</b>${escapeHTML(monster.loot.join(" · "))}</span></div>
   </article>`;
@@ -209,12 +212,14 @@ function renderScoreList() {
 }
 
 function renderGameShell(content, eyebrow, title, subtitle = "") {
-  app.innerHTML = `<div class="game-heading"><div><p class="eyebrow">${escapeHTML(eyebrow)}</p><h1>${escapeHTML(title)}</h1>${subtitle ? `<p class="intro">${escapeHTML(subtitle)}</p>` : ""}</div><div class="round-stamp"><span>Runde</span><strong>${state.round}</strong></div></div>${content}`;
+  app.innerHTML = `<div class="game-heading"><div><p class="eyebrow">${escapeHTML(eyebrow)}</p><h1>${escapeHTML(title)}</h1>${subtitle ? `<p class="intro">${escapeHTML(subtitle)}</p>` : ""}</div><div class="round-stamp"><span>Runde</span><strong>${state.round}</strong>${state.testMode ? '<small class="test-mode-badge">Testmodus</small>' : ""}</div></div>${content}`;
 }
 
 function renderTransfer() {
   const playersWithAlliance = state.players.filter((player) => allianceKey(player.alliance));
   const transferOptions = playersWithAlliance;
+  const weaponHolders = state.players.filter((player) => player.weapons.length);
+  const availableWeapons = [...new Set(weaponHolders.flatMap((player) => player.weapons))];
   const transferForm = playersWithAlliance.length >= 2 && transferOptions.length >= 2 ? `
     <form id="transfer-form">
       <div class="transfer-form">
@@ -226,7 +231,18 @@ function renderTransfer() {
       <p class="transfer-message" id="transfer-message" role="status"></p>
       <button class="secondary-button" type="submit">Siegpunkte übertragen ${icon("arrow")}</button>
     </form>` : `<p class="form-note">Für diese Runde ist kein weiterer Allianztransfer möglich.</p>`;
-  const content = `<div class="game-layout"><section><div class="board-heading"><h2>Schlachtfeld</h2><span>Angriffsziele</span></div>${renderBoard()}</section><aside class="sidebar"><section class="side-section"><div class="side-title"><h2>Punktestand</h2><span>${state.players.length} Spieler</span></div><div class="score-list">${renderScoreList()}</div></section><section class="side-section"><div class="side-title"><h2>Allianztransfer</h2><span>vor den Angriffen</span></div><div class="transfer-list">${state.players.map((player) => `<div class="transfer-player"><span>${escapeHTML(player.name)}</span><strong>${player.points}</strong></div>`).join("")}</div>${transferForm}</section><div class="sidebar-actions"><button class="primary-button" type="button" data-action="start-planning">Angriffe planen ${icon("arrow")}</button></div></aside></div>`;
+  const weaponTransferForm = availableWeapons.length ? `
+    <form id="weapon-transfer-form">
+      <div class="transfer-form">
+        <select class="select-input" name="from" aria-label="Spezialwaffe abgeben">${weaponHolders.map((player) => `<option value="${player.id}">${escapeHTML(player.name)}</option>`).join("")}</select>
+        <select class="select-input" name="to" aria-label="Spezialwaffe erhalten">${state.players.map((player) => `<option value="${player.id}">${escapeHTML(player.name)}</option>`).join("")}</select>
+        <select class="select-input" name="weapon" aria-label="Spezialwaffe auswählen">${availableWeapons.map((weapon) => `<option>${escapeHTML(weapon)}</option>`).join("")}</select>
+      </div>
+      <p class="form-note">Spezialwaffen können an jeden anderen Spieler weitergegeben werden.</p>
+      <p class="transfer-message" id="weapon-transfer-message" role="status"></p>
+      <button class="secondary-button" type="submit">Spezialwaffe weitergeben ${icon("arrow")}</button>
+    </form>` : `<p class="form-note">Es gibt keine Spezialwaffen zum Weitergeben.</p>`;
+  const content = `<div class="game-layout"><section><div class="board-heading"><h2>Schlachtfeld</h2><span>Angriffsziele</span></div>${renderBoard()}</section><aside class="sidebar"><section class="side-section"><div class="side-title"><h2>Punktestand</h2><span>${state.players.length} Spieler</span></div><div class="score-list">${renderScoreList()}</div></section><section class="side-section"><div class="side-title"><h2>Allianztransfer</h2><span>vor den Angriffen</span></div><div class="transfer-list">${state.players.map((player) => `<div class="transfer-player"><span>${escapeHTML(player.name)}</span><strong>${player.points}</strong></div>`).join("")}</div>${transferForm}</section><section class="side-section"><div class="side-title"><h2>Spezialwaffen</h2><span>Übergabe</span></div>${weaponTransferForm}</section><div class="sidebar-actions"><button class="primary-button" type="button" data-action="start-planning">Angriffe planen ${icon("arrow")}</button></div></aside></div>`;
   renderGameShell(content, "Rundenbeginn", "Punkte teilen, dann angreifen", "Allianzmitglieder können vor den Angriffen Siegpunkte übertragen.");
 }
 
@@ -280,7 +296,7 @@ function updateAttackHelp() {
   const submit = document.querySelector('[data-action="submit-attack"]');
   if (!help || !submit) return;
   if (weapon === "Gekreuzte Schwerter") help.textContent = targets.length === 2 ? "Beide Ziele erhalten je 2 Schaden." : "Ein Ziel erhält 4 Schaden. Wähle bei Bedarf ein zweites Ziel.";
-  else help.textContent = weapon ? `${weapon}: ${WEAPONS[weapon].damage} Schaden${weapon === "Dynamit" ? " beim nächsten Zug" : " sofort"}.` : "Wähle ein Monster auf dem Schlachtfeld.";
+  else help.textContent = weapon ? `${weapon}: ${WEAPONS[weapon].damage} Schaden${weapon === "Dynamit" ? " beim nächsten eigenen Zug" : " sofort"}.` : "Wähle ein Monster auf dem Schlachtfeld.";
   submit.disabled = targets.length === 0 || (targets.length > 1 && weapon !== "Gekreuzte Schwerter");
 }
 
@@ -307,8 +323,8 @@ function monsterAt(slot) {
   return state.field[slot]?.empty ? null : state.field[slot] ?? null;
 }
 
-function addLog(message, death = false) {
-  state.resultsLog.push({ message, death });
+function addLog(message, death = false, rewards = []) {
+  state.resultsLog.push({ message, death, rewards });
 }
 
 function killMonster(monster, slot, player, cause) {
@@ -320,19 +336,20 @@ function killMonster(monster, slot, player, cause) {
     else player.weapons.push(item);
     rewards.push(item);
   });
-  addLog(`${player.name} hat ${monster.name} mit ${cause} besiegt.`, true);
+  addLog(`${player.name} hat ${monster.name} mit ${cause} besiegt.`, true, rewards);
 }
 
 function dealDamage(slot, amount, player, cause) {
   const monster = monsterAt(slot);
-  if (!monster) return;
+  if (!monster) return false;
   if (monster.frozenBy && monster.frozenBy !== player.id) {
     addLog(`${player.name}s Angriff mit ${cause} prallt an ${monster.name}s Eis-Schutz ab.`);
-    return;
+    return false;
   }
   monster.hp -= amount;
   addLog(`${player.name} fügt ${monster.name} mit ${cause} ${amount} Schaden zu.`);
   if (monster.hp <= 0) killMonster(monster, slot, player, cause);
+  return true;
 }
 
 function resolveRound() {
@@ -345,17 +362,17 @@ function resolveRound() {
     state.field.forEach((monster) => {
       if (monster.frozenBy === player.id) monster.frozenBy = null;
     });
-    const due = state.pending.filter((effect) => effect.playerId === player.id && effect.dueRound <= state.round);
+    const due = state.pending.filter((effect) => effect.playerId === player.id);
     state.pending = state.pending.filter((effect) => !due.includes(effect));
     due.forEach((effect) => {
       const targetSlot = state.field.findIndex((monster) => monster && !monster.empty && monster.id === effect.targetMonsterId);
       if (targetSlot >= 0) dealDamage(targetSlot, effect.damage, player, "Dynamit");
-      else addLog(`${player.name}s Dynamit verpufft, weil das Ziel vorher besiegt wurde.`);
+      else addLog(`${player.name}s Dynamit verfällt, weil das Ziel vorher besiegt wurde.`);
     });
     if (attack.weapon === "Dynamit") {
       const target = monsterAt(attack.targets[0]);
       if (target) {
-        state.pending.push({ playerId: player.id, targetMonsterId: target.id, damage: 10, dueRound: state.round + 1 });
+        state.pending.push({ playerId: player.id, targetMonsterId: target.id, damage: 10 });
         addLog(`${player.name} platziert Dynamit an ${target.name}. Es explodiert vor dem nächsten eigenen Angriff.`);
       }
     } else {
@@ -365,15 +382,16 @@ function resolveRound() {
         targets.forEach((slot) => dealDamage(slot, damage, player, attack.weapon));
       } else {
         const slot = targets[0];
-        dealDamage(slot, WEAPONS[attack.weapon].damage, player, attack.weapon);
-        const monster = monsterAt(slot);
-        if (attack.weapon === "Gift" && monster) monster.poison += 1;
-        if (attack.weapon === "Eis" && monster) monster.frozenBy = player.id;
+        const target = monsterAt(slot);
+        const blockedByIce = target?.frozenBy && target.frozenBy !== player.id;
+        if (attack.weapon === "Gift" && target && !blockedByIce) target.poison = true;
+        const damaged = dealDamage(slot, WEAPONS[attack.weapon].damage, player, attack.weapon);
+        const remainingTarget = monsterAt(slot);
+        if (attack.weapon === "Eis" && damaged && remainingTarget?.id === target?.id) remainingTarget.frozenBy = player.id;
       }
     }
     state.field.forEach((monster, slot) => {
       if (monster?.poison > 0) {
-        monster.poison -= 1;
         monster.hp -= 1;
         addLog(`Gift entzieht ${monster.name} 1 Lebenspunkt.`);
         if (monster.hp <= 0) killMonster(monster, slot, player, "Gift");
@@ -388,7 +406,7 @@ function resolveRound() {
 
 function renderResults() {
   const deaths = state.resultsLog.filter((result) => result.death);
-  const rows = deaths.length ? deaths.map((result) => `<div class="result-item death"><span class="result-copy">${escapeHTML(result.message)}</span><span class="result-tag">MONSTER BESIEGT</span></div>`).join("") : '<div class="result-item"><span class="result-copy">In dieser Runde wurde kein Monster besiegt.</span></div>';
+  const rows = deaths.length ? deaths.map((result) => `<div class="result-item death"><span class="result-copy">${escapeHTML(result.message)}${result.rewards?.length ? `<small class="result-rewards">Beute: ${escapeHTML(result.rewards.join(", "))}</small>` : ""}</span><span class="result-tag">MONSTER BESIEGT</span></div>`).join("") : '<div class="result-item"><span class="result-copy">In dieser Runde wurde kein Monster besiegt.</span></div>';
   const content = `<div class="resolve-screen"><p class="eyebrow">Runde ${state.round} · öffentliche Tötungen</p><h2>Wer hat ein Monster besiegt?</h2><div class="result-list">${rows}</div><div class="resolve-actions"><button class="primary-button" type="button" data-action="next-round">Weiter zur nächsten Runde ${icon("arrow")}</button></div></div>`;
   renderGameShell(content, "Kampfergebnis", "Das Schlachtfeld verändert sich", "Angezeigt werden nur besiegte Monster und ihre Sieger.");
 }
@@ -440,6 +458,22 @@ function transferPoints(form) {
   render();
 }
 
+function transferWeapon(form) {
+  const data = new FormData(form);
+  const sender = state.players.find((player) => player.id === data.get("from"));
+  const receiver = state.players.find((player) => player.id === data.get("to"));
+  const weapon = data.get("weapon");
+  const error = document.querySelector("#weapon-transfer-message");
+  const fail = (text) => { if (error) error.textContent = text; };
+  if (!sender || !receiver || sender.id === receiver.id) return fail("Wähle zwei verschiedene Spieler aus.");
+  const weaponIndex = sender.weapons.indexOf(weapon);
+  if (weaponIndex < 0) return fail("Dieser Spieler besitzt die ausgewählte Spezialwaffe nicht mehr.");
+  sender.weapons.splice(weaponIndex, 1);
+  receiver.weapons.push(weapon);
+  saveGame();
+  render();
+}
+
 app.addEventListener("input", (event) => {
   if (event.target.matches("[data-player-name]")) draftPlayers[Number(event.target.dataset.playerName)].name = event.target.value;
   if (event.target.matches("[data-player-alliance]")) draftPlayers[Number(event.target.dataset.playerAlliance)].alliance = event.target.value;
@@ -448,19 +482,15 @@ app.addEventListener("input", (event) => {
 app.addEventListener("change", (event) => {
   if (event.target.matches("#weapon-choice")) updateAttackHelp();
   if (event.target.matches("#second-target")) {
-    const second = event.target.value;
-    if (second !== "" && state.field[Number(second)]?.empty) {
+    const first = selectedTargets()[0];
+    if (event.target.value !== "" && (first === undefined || Number(event.target.value) === first || state.field[Number(event.target.value)]?.empty)) {
       event.target.value = "";
-      updateAttackHelp();
-      return;
     }
-    if (second !== "") {
-      const first = selectedTargets()[0];
-      if (first !== undefined && Number(second) !== first) {
-        const card = document.querySelector(`.attack-form .monster-card[data-index="${Number(second)}"]`);
-        if (card && !card.classList.contains("selected")) card.classList.add("selected");
-      }
-    }
+    const second = event.target.value === "" ? undefined : Number(event.target.value);
+    document.querySelectorAll(".attack-form .monster-card").forEach((card) => {
+      const index = Number(card.dataset.index);
+      card.classList.toggle("selected", index === first || index === second);
+    });
     updateAttackHelp();
   }
 });
@@ -473,6 +503,10 @@ app.addEventListener("submit", (event) => {
   if (event.target.id === "transfer-form") {
     event.preventDefault();
     transferPoints(event.target);
+  }
+  if (event.target.id === "weapon-transfer-form") {
+    event.preventDefault();
+    transferWeapon(event.target);
   }
 });
 
@@ -506,7 +540,9 @@ document.addEventListener("click", (event) => {
     const weapon = document.querySelector("#weapon-choice")?.value;
     const cards = [...document.querySelectorAll(".attack-form .monster-card")];
     if (weapon === "Gekreuzte Schwerter" && event.shiftKey) {
-      cards[selected]?.classList.toggle("selected");
+      const card = cards[selected];
+      if (card?.classList.contains("selected")) card.classList.remove("selected");
+      else if (document.querySelectorAll(".attack-form .monster-card.selected").length < 2) card?.classList.add("selected");
     } else {
       cards.forEach((card, index) => card.classList.toggle("selected", index === selected));
     }

@@ -95,6 +95,12 @@ h3 { margin-bottom: 8px; font-size: 20px; }
 .primary-button svg, .secondary-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .setup-submit { width: 100%; margin-top: 22px; }
 .setup-note { margin: 14px 0 0; color: var(--quiet); font-size: 11px; text-align: center; }
+.test-mode-toggle { display: flex; align-items: flex-start; gap: 11px; margin-top: 18px; padding: 13px 14px; border: 1px solid var(--line); background: rgba(0, 0, 0, .12); cursor: pointer; }
+.test-mode-toggle input { width: 17px; height: 17px; flex: 0 0 auto; margin: 1px 0 0; accent-color: var(--gold); }
+.test-mode-toggle strong, .test-mode-toggle small { display: block; }
+.test-mode-toggle strong { color: var(--ink); font-size: 12px; }
+.test-mode-toggle small { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.test-mode-badge { padding: 3px 6px; border: 1px solid var(--gold-dim); color: var(--gold); font-size: 9px; font-weight: 700; text-transform: uppercase; }
 
 .field-preview { position: relative; margin-top: 17px; padding: 18px; border: 1px solid #48503f; background: rgba(31, 36, 29, .78); }
 .field-preview::before, .field-preview::after { position: absolute; right: 8px; left: 8px; height: 5px; border-right: 1px solid #8a7950; border-left: 1px solid #8a7950; content: ""; }
@@ -197,6 +203,7 @@ h3 { margin-bottom: 8px; font-size: 20px; }
 .transfer-player span { color: var(--muted); font-size: 12px; }
 .transfer-player strong { color: var(--gold); font-family: var(--serif); font-size: 18px; }
 .transfer-form { display: grid; grid-template-columns: 1fr 1fr 90px; gap: 10px; }
+#weapon-transfer-form .transfer-form { grid-template-columns: minmax(0, 1fr); }
 .transfer-form .select-input, .transfer-form .text-input { height: 46px; }
 .transfer-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 19px; }
 .transfer-actions .primary-button { flex: 1; }
@@ -206,6 +213,7 @@ h3 { margin-bottom: 8px; font-size: 20px; }
 .result-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; padding: 13px 15px; border-left: 2px solid var(--line); background: rgba(0, 0, 0, .14); }
 .result-item.death { border-color: var(--rust); }
 .result-copy { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.result-rewards { display: block; margin-top: 4px; color: var(--gold); font-size: 11px; }
 .result-copy strong { color: var(--ink); }
 .result-tag { flex: 0 0 auto; color: var(--gold); font-size: 10px; }
 .resolve-actions { display: flex; justify-content: flex-end; }
