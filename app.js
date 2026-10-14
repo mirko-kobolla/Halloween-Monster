@@ -84,7 +84,8 @@ function render() {
     renderLobby();
     return;
   }
-  if (state.phase === "handoff") renderHandoff();
+  if (state.phase === "orderPreview") renderOrderPreview();
+  else if (state.phase === "handoff") renderHandoff();
   else if (state.phase === "attack") renderAttackForm();
   else if (state.phase === "results") renderResults();
   else if (state.phase === "ended") renderEnd();
@@ -211,26 +212,82 @@ function renderScoreList() {
   }).join("");
 }
 
+function allianceGroups() {
+  const groups = new Map();
+  state.players.forEach((player) => {
+    const key = allianceKey(player.alliance);
+    if (key) groups.set(key, [...(groups.get(key) ?? []), player]);
+  });
+  return [...groups.entries()]
+    .filter(([, members]) => members.length > 1)
+    .map(([key, members]) => ({ key, name: allianceName(members[0].alliance), members }));
+}
+
+function renderAllocationRows(alliance) {
+  const total = alliance.members.reduce((sum, player) => sum + player.points, 0);
+  const maximum = total - alliance.members.length + 1;
+  return alliance.members.map((player) => `
+    <label class="allocation-row" for="allocation-${escapeHTML(player.id)}">
+      <span class="allocation-name"><strong>${escapeHTML(player.name)}</strong><small>Aktuell ${player.points} SP</small></span>
+      <span class="allocation-input-wrap"><input class="text-input" id="allocation-${escapeHTML(player.id)}" name="points-${escapeHTML(player.id)}" type="number" min="1" max="${maximum}" value="${player.points}" required data-allocation-points><small>SP</small></span>
+    </label>`).join("");
+}
+
+function renderAllocationDialog() {
+  const alliances = allianceGroups();
+  const selected = alliances[0];
+  if (!selected) return "";
+  const total = selected.members.reduce((sum, player) => sum + player.points, 0);
+  return `<dialog class="allocation-dialog" id="alliance-dialog" aria-labelledby="allocation-title">
+    <div class="allocation-dialog-inner">
+      <div class="allocation-heading"><div><p class="eyebrow">Vor den Angriffen</p><h2 id="allocation-title">Siegpunkte neu verteilen</h2></div><button class="remove-player" type="button" data-action="close-allocation" aria-label="Fenster schließen">${icon("x")}</button></div>
+      <p class="allocation-intro">Wähle eine Allianz und teile ihren gesamten Punktepool neu auf. Die Verteilung wird erst nach deiner Bestätigung übernommen.</p>
+      <form id="allocation-form" data-allocation-pool="${total}">
+        <label class="field-label" for="allocation-alliance">Allianz auswählen</label>
+        <select class="select-input allocation-select" id="allocation-alliance" name="alliance">${alliances.map((alliance) => `<option value="${escapeHTML(alliance.key)}" ${alliance.key === selected.key ? "selected" : ""}>${escapeHTML(alliance.name)}</option>`).join("")}</select>
+        <div class="allocation-pool"><span>Verfügbare Siegpunkte</span><strong id="allocation-total">${total} SP</strong></div>
+        <div class="allocation-members" id="allocation-members">${renderAllocationRows(selected)}</div>
+        <p class="allocation-balance" id="allocation-balance" aria-live="polite">Alle ${total} SP sind zugeteilt.</p>
+        <p class="allocation-message" id="allocation-message" role="alert"></p>
+        <div class="allocation-actions"><button class="secondary-button" type="button" data-action="close-allocation">Abbrechen</button><button class="primary-button" id="confirm-allocation" type="submit">Verteilung bestätigen ${icon("arrow")}</button></div>
+      </form>
+    </div>
+  </dialog>`;
+}
+
+function updateAllocationDialog(allianceKeyValue) {
+  const alliance = allianceGroups().find((group) => group.key === allianceKeyValue);
+  const form = document.querySelector("#allocation-form");
+  if (!alliance || !form) return;
+  const total = alliance.members.reduce((sum, player) => sum + player.points, 0);
+  form.dataset.allocationPool = String(total);
+  document.querySelector("#allocation-total").textContent = `${total} SP`;
+  document.querySelector("#allocation-members").innerHTML = renderAllocationRows(alliance);
+  document.querySelector("#allocation-message").textContent = "";
+  updateAllocationBalance(form);
+}
+
+function updateAllocationBalance(form) {
+  const pool = Number(form.dataset.allocationPool);
+  const inputs = [...form.querySelectorAll("[data-allocation-points]")];
+  const values = inputs.map((input) => Number(input.value));
+  const assigned = values.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
+  const valid = inputs.every((input, index) => input.value !== "" && Number.isInteger(values[index]) && values[index] >= 1 && values[index] <= Number(input.max));
+  const balance = document.querySelector("#allocation-balance");
+  if (valid && assigned === pool) balance.textContent = `Alle ${pool} SP sind zugeteilt.`;
+  else if (assigned < pool) balance.textContent = `Noch ${pool - assigned} SP zu verteilen.`;
+  else balance.textContent = `${assigned - pool} SP zu viel verteilt.`;
+  document.querySelector("#confirm-allocation").disabled = !(valid && assigned === pool);
+}
+
 function renderGameShell(content, eyebrow, title, subtitle = "") {
   app.innerHTML = `<div class="game-heading"><div><p class="eyebrow">${escapeHTML(eyebrow)}</p><h1>${escapeHTML(title)}</h1>${subtitle ? `<p class="intro">${escapeHTML(subtitle)}</p>` : ""}</div><div class="round-stamp"><span>Runde</span><strong>${state.round}</strong>${state.testMode ? '<small class="test-mode-badge">Testmodus</small>' : ""}</div></div>${content}`;
 }
 
 function renderTransfer() {
-  const playersWithAlliance = state.players.filter((player) => allianceKey(player.alliance));
-  const transferOptions = playersWithAlliance;
+  const alliances = allianceGroups();
   const weaponHolders = state.players.filter((player) => player.weapons.length);
   const availableWeapons = [...new Set(weaponHolders.flatMap((player) => player.weapons))];
-  const transferForm = playersWithAlliance.length >= 2 && transferOptions.length >= 2 ? `
-    <form id="transfer-form">
-      <div class="transfer-form">
-        <select class="select-input" name="from" aria-label="Punkte abgeben">${transferOptions.map((player) => `<option value="${player.id}">${escapeHTML(player.name)} · ${player.points} SP</option>`).join("")}</select>
-        <select class="select-input" name="to" aria-label="Punkte erhalten">${transferOptions.map((player) => `<option value="${player.id}">${escapeHTML(player.name)} · ${player.points} SP</option>`).join("")}</select>
-        <input class="text-input" name="amount" type="number" min="1" value="1" aria-label="Anzahl Siegpunkte">
-      </div>
-      <p class="form-note">Du kannst mehrere Transfers an verschiedene Mitglieder derselben Allianz durchführen. Der Abgeber behält mindestens einen Siegpunkt.</p>
-      <p class="transfer-message" id="transfer-message" role="status"></p>
-      <button class="secondary-button" type="submit">Siegpunkte übertragen ${icon("arrow")}</button>
-    </form>` : `<p class="form-note">Für diese Runde ist kein weiterer Allianztransfer möglich.</p>`;
   const weaponTransferForm = availableWeapons.length ? `
     <form id="weapon-transfer-form">
       <div class="transfer-form">
@@ -242,8 +299,19 @@ function renderTransfer() {
       <p class="transfer-message" id="weapon-transfer-message" role="status"></p>
       <button class="secondary-button" type="submit">Spezialwaffe weitergeben ${icon("arrow")}</button>
     </form>` : `<p class="form-note">Es gibt keine Spezialwaffen zum Weitergeben.</p>`;
-  const content = `<div class="game-layout"><section><div class="board-heading"><h2>Schlachtfeld</h2><span>Angriffsziele</span></div>${renderBoard()}</section><aside class="sidebar"><section class="side-section"><div class="side-title"><h2>Punktestand</h2><span>${state.players.length} Spieler</span></div><div class="score-list">${renderScoreList()}</div></section><section class="side-section"><div class="side-title"><h2>Allianztransfer</h2><span>vor den Angriffen</span></div><div class="transfer-list">${state.players.map((player) => `<div class="transfer-player"><span>${escapeHTML(player.name)}</span><strong>${player.points}</strong></div>`).join("")}</div>${transferForm}</section><section class="side-section"><div class="side-title"><h2>Spezialwaffen</h2><span>Übergabe</span></div>${weaponTransferForm}</section><div class="sidebar-actions"><button class="primary-button" type="button" data-action="start-planning">Angriffe planen ${icon("arrow")}</button></div></aside></div>`;
-  renderGameShell(content, "Rundenbeginn", "Punkte teilen, dann angreifen", "Allianzmitglieder können vor den Angriffen Siegpunkte übertragen.");
+  const allocationButton = `<button class="secondary-button allocation-open" type="button" data-action="open-allocation" ${alliances.length ? "" : "disabled"}>Siegpunkte neu verteilen ${icon("arrow")}</button>`;
+  const allocationHint = alliances.length ? "" : `<p class="form-note">Für die Neuverteilung müssen mindestens zwei Spieler derselben Allianz angehören. Lege die Allianz beim Spielstart fest.</p>`;
+  const content = `<div class="game-layout"><section><div class="board-heading"><h2>Schlachtfeld</h2><span>Angriffsziele</span></div>${renderBoard()}</section><aside class="sidebar"><section class="side-section"><div class="side-title"><h2>Allianzverteilung</h2><span>vor den Angriffen</span></div><p class="form-note allocation-note">Wähle eine Allianz, um ihre Siegpunkte neu zuzuordnen. Die Rangfolge bleibt hier verborgen.</p>${allocationButton}${allocationHint}</section><section class="side-section"><div class="side-title"><h2>Spezialwaffen</h2><span>Übergabe</span></div>${weaponTransferForm}</section><div class="sidebar-actions"><button class="primary-button" type="button" data-action="start-planning">Angriffe planen ${icon("arrow")}</button></div></aside></div>${renderAllocationDialog()}`;
+  renderGameShell(content, "Rundenbeginn", "Punkte teilen, dann angreifen", "Verteile Allianzpunkte neu, bevor die Angriffsreihenfolge festgelegt wird.");
+}
+
+function renderOrderPreview() {
+  const rows = state.order.map((playerId, index) => {
+    const player = state.players.find((item) => item.id === playerId);
+    return `<div class="score-row"><span class="score-index">${String(index + 1).padStart(2, "0")}</span><span class="score-name">${escapeHTML(player.name)}</span><strong class="score-value">${player.points} SP</strong></div>`;
+  }).join("");
+  const content = `<section class="resolve-screen order-preview"><p class="eyebrow">Vor den Angriffen</p><h2>Diese Reihenfolge gilt für die Runde</h2><p class="intro">Die Reihenfolge richtet sich nach den Siegpunkten. Bei Gleichstand wird zufällig ausgelost.</p><div class="score-list order-list">${rows}</div><div class="resolve-actions"><button class="primary-button" type="button" data-action="confirm-order">Reihenfolge bestätigen und Angriffe starten ${icon("arrow")}</button></div></section>`;
+  renderGameShell(content, "Reihenfolge", "Angriffsreihenfolge", "Die Reihenfolge wird erst nach der Punkteverteilung gezeigt.");
 }
 
 function beginPlanning() {
@@ -255,8 +323,8 @@ function beginPlanning() {
   state.order = [...groups.keys()].sort((left, right) => right - left).flatMap((points) => shuffle(groups.get(points))).map((player) => player.id);
   state.attacks = {};
   state.plannerIndex = 0;
-  state.currentPlanner = state.order[0];
-  state.phase = "handoff";
+  state.currentPlanner = null;
+  state.phase = "orderPreview";
   saveGame();
   render();
 }
@@ -442,18 +510,17 @@ function renderEnd() {
   app.innerHTML = `<section class="end-screen"><p class="eyebrow">Spiel beendet</p><h1>${winners.length > 1 ? "Gleichstand." : `Sieg für <em>${escapeHTML(winners[0].name)}</em>.`}</h1><p>${winners.length > 1 ? "Mehrere Spieler teilen sich den ersten Platz." : "Das Schlachtfeld ist leer."}</p><div class="winner-list">${scores.map((player) => `<div class="winner-row"><strong>${escapeHTML(player.name)}${allianceName(player.alliance) ? ` · ${escapeHTML(allianceName(player.alliance))}` : ""}</strong><span>${player.final} SP</span></div>`).join("")}</div><button class="primary-button" type="button" data-action="new-game">Neues Spiel vorbereiten ${icon("arrow")}</button></section>`;
 }
 
-function transferPoints(form) {
+function allocateAlliancePoints(form) {
   const data = new FormData(form);
-  const sender = state.players.find((player) => player.id === data.get("from"));
-  const receiver = state.players.find((player) => player.id === data.get("to"));
-  const amount = Math.floor(Number(data.get("amount")));
-  const error = document.querySelector("#transfer-message");
+  const alliance = allianceGroups().find((group) => group.key === data.get("alliance"));
+  const error = document.querySelector("#allocation-message");
   const fail = (text) => { if (error) error.textContent = text; };
-  if (!sender || !receiver || sender.id === receiver.id) return fail("Wähle zwei verschiedene Spieler aus.");
-  if (!allianceKey(sender.alliance) || allianceKey(sender.alliance) !== allianceKey(receiver.alliance)) return fail("Punkte können nur innerhalb derselben Allianz übertragen werden.");
-  if (!Number.isInteger(amount) || amount < 1 || sender.points - amount < 1) return fail("Der abgebende Spieler muss mindestens einen Siegpunkt behalten.");
-  sender.points -= amount;
-  receiver.points += amount;
+  if (!alliance) return fail("Wähle eine gültige Allianz aus.");
+  const allocations = alliance.members.map((player) => ({ player, points: Number(data.get(`points-${player.id}`)) }));
+  const total = alliance.members.reduce((sum, player) => sum + player.points, 0);
+  if (allocations.some(({ points }) => !Number.isInteger(points) || points < 1)) return fail("Jedes Mitglied muss mindestens einen Siegpunkt behalten.");
+  if (allocations.reduce((sum, allocation) => sum + allocation.points, 0) !== total) return fail("Verteile alle verfügbaren Siegpunkte, ohne die Gesamtsumme zu verändern.");
+  allocations.forEach(({ player, points }) => { player.points = points; });
   saveGame();
   render();
 }
@@ -477,10 +544,12 @@ function transferWeapon(form) {
 app.addEventListener("input", (event) => {
   if (event.target.matches("[data-player-name]")) draftPlayers[Number(event.target.dataset.playerName)].name = event.target.value;
   if (event.target.matches("[data-player-alliance]")) draftPlayers[Number(event.target.dataset.playerAlliance)].alliance = event.target.value;
+  if (event.target.matches("[data-allocation-points]")) updateAllocationBalance(event.target.form);
 });
 
 app.addEventListener("change", (event) => {
   if (event.target.matches("#weapon-choice")) updateAttackHelp();
+  if (event.target.matches("#allocation-alliance")) updateAllocationDialog(event.target.value);
   if (event.target.matches("#second-target")) {
     const first = selectedTargets()[0];
     if (event.target.value !== "" && (first === undefined || Number(event.target.value) === first || state.field[Number(event.target.value)]?.empty)) {
@@ -500,9 +569,9 @@ app.addEventListener("submit", (event) => {
     event.preventDefault();
     startGame();
   }
-  if (event.target.id === "transfer-form") {
+  if (event.target.id === "allocation-form") {
     event.preventDefault();
-    transferPoints(event.target);
+    allocateAlliancePoints(event.target);
   }
   if (event.target.id === "weapon-transfer-form") {
     event.preventDefault();
@@ -532,6 +601,16 @@ document.addEventListener("click", (event) => {
     }
   } else if (action === "start-planning") {
     beginPlanning();
+  } else if (action === "confirm-order") {
+    state.plannerIndex = 0;
+    state.currentPlanner = state.order[0];
+    state.phase = "handoff";
+    saveGame();
+    render();
+  } else if (action === "open-allocation") {
+    document.querySelector("#alliance-dialog")?.showModal();
+  } else if (action === "close-allocation") {
+    document.querySelector("#alliance-dialog")?.close();
   } else if (action === "show-attack") {
     state.phase = "attack";
     render();
