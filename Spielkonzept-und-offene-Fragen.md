@@ -51,16 +51,18 @@ Spezialwaffen sind dagegen Verbrauchskarten. Nach ihrer Verwendung werden sie ab
 
 Eine Runde besteht nach meinem Verständnis aus diesen Phasen:
 
-### 4.1 Siegpunkte übertragen
+### 4.1 Siegpunkte innerhalb einer Allianz neu verteilen
 
-Vor den Angriffen dürfen Spieler Siegpunkte untereinander übertragen.
+Vor den Angriffen wird der bisherige Allianztransfer durch eine Neuverteilung der Siegpunkte ersetzt:
 
 Dabei gilt:
 
-- Ein Transfer ist nur zwischen Mitgliedern derselben Allianz erlaubt.
-- Jeder Spieler muss nach seinem Transfer mindestens einen Siegpunkt behalten.
-- Transfers finden nur während dieser Phase statt.
-- Nach Ende der Phase sind keine weiteren Transfers für diese Runde möglich.
+- Die Verteilung wird in einem eigenen Fenster vorgenommen; währenddessen bleibt die Rangliste beziehungsweise Angriffsreihenfolge verborgen.
+- Es kann eine Allianz ausgewählt werden. Das Fenster zeigt deren Mitglieder und die gesamte verfügbare Punktzahl.
+- Die Siegpunkte werden den Mitgliedern dieser Allianz neu zugeordnet; die Allianzsumme bleibt unverändert.
+- Jedes Mitglied muss mindestens einen Siegpunkt behalten.
+- Die Neuverteilung wird ausdrücklich bestätigt, bevor sie übernommen wird.
+- Die Verteilung ist nur vor den Angriffen möglich.
 
 ### 4.2 Angriffsreihenfolge bestimmen
 
@@ -70,6 +72,7 @@ Nach den Transfers wird die Reihenfolge festgelegt:
 - Danach folgen die übrigen Spieler in absteigender Reihenfolge ihrer Siegpunkte.
 - Bei gleicher Punktzahl wird die Reihenfolge zufällig ausgelost.
 - Die ermittelte Reihenfolge gilt für die Angriffe der Runde.
+- Die Reihenfolge wird erst nach der Punkteverteilung berechnet und allen Spielern vor Beginn der geheimen Angriffsplanung angezeigt.
 
 ### 4.3 Angriffe auswählen
 
