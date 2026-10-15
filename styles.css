@@ -197,6 +197,18 @@ h3 { margin-bottom: 8px; font-size: 20px; }
 .weapon-select { height: 48px; }
 .attack-help { min-height: 20px; margin: 12px 0 0; color: var(--muted); font-size: 12px; }
 .attack-submit { width: 100%; margin-top: 18px; }
+.coin-hp-note { padding: 10px 12px; border-left: 2px solid var(--gold); color: var(--gold); background: rgba(232, 183, 93, .07); font-size: 12px; }
+.coin-action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 22px 0; }
+.coin-action { display: grid; align-content: start; gap: 10px; padding: 16px; border: 1px solid var(--line); background: rgba(0, 0, 0, .12); }
+.coin-action h3 { margin: 0; font-family: var(--serif); font-size: 20px; }
+.coin-action p { min-height: 52px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.coin-action .secondary-button { width: 100%; }
+.coin-action .field-label { margin-top: 4px; }
+.coin-action .select-input { margin-bottom: 10px; }
+.coin-finish { margin-top: 18px; }
+.coin-hp-list { display: grid; gap: 7px; }
+.coin-hp-row { display: flex; justify-content: space-between; gap: 16px; padding: 11px 12px; border: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.coin-hp-row strong { color: var(--gold); font-family: var(--serif); font-size: 15px; }
 .allocation-open { width: 100%; }
 .allocation-dialog { width: min(540px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow: auto; border: 1px solid var(--gold-dim); border-radius: 3px; color: var(--ink); background: var(--ground-raised); box-shadow: 0 24px 80px rgba(0, 0, 0, .55); }
 .allocation-dialog::backdrop { background: rgba(8, 10, 8, .82); backdrop-filter: blur(5px); }
@@ -222,6 +234,8 @@ h3 { margin-bottom: 8px; font-size: 20px; }
 .allocation-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 17px; }
 .transfer-form { display: grid; grid-template-columns: 1fr 1fr 90px; gap: 10px; }
 #weapon-transfer-form .transfer-form { grid-template-columns: minmax(0, 1fr); }
+#taler-transfer-form .transfer-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#taler-transfer-form .secondary-button { width: 100%; }
 .transfer-form .select-input, .transfer-form .text-input { height: 46px; }
 .transfer-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 19px; }
 .transfer-actions .primary-button { flex: 1; }
@@ -296,6 +310,8 @@ h3 { margin-bottom: 8px; font-size: 20px; }
   .monster-hp { font-size: 12px; }
   .monster-name { font-size: 12px; }
   .attack-tools { grid-template-columns: 1fr; }
+  .coin-action-grid { grid-template-columns: 1fr; }
+  .coin-action p { min-height: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

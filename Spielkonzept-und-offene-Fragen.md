@@ -45,7 +45,14 @@ Ein Spieler besitzt mindestens:
 
 Der Dolch ist keine Einwegkarte. Er darf in jeder Runde erneut verwendet werden und kehrt nach dem Angriff zum Spieler zurück.
 
-Spezialwaffen sind dagegen Verbrauchskarten. Nach ihrer Verwendung werden sie abgegeben. Spezialwaffen dürfen außerdem zwischen Spielern getauscht oder weitergegeben werden.
+Spezialwaffen sind dagegen Verbrauchskarten. Nach ihrer Verwendung werden sie abgegeben. Spezialwaffen und Taler dürfen zwischen Spielern getauscht oder weitergegeben werden.
+
+Taler sind Beute und bleiben beim Spieler, bis er sie einlöst. Jeder eingelöste Taler ermöglicht genau eine von zwei Aktionen:
+
+- Beim Einlösen wird ein Fenster mit den aktuellen Lebenspunkten der Monster angezeigt. Wenn der Spieler später in dieser Runde angreift, sieht er die dann aktuellen Lebenspunkte in seiner Angriffsansicht.
+- Der Spieler legt für die aktuelle Runde seine Position in der Angriffsreihenfolge fest. Die anderen Spieler rücken entsprechend nach; ihre relative Reihenfolge bleibt erhalten.
+
+Der Taler wird bei der Einlösung verbraucht. Eine Rangwahl verändert keine Siegpunkte und gilt nur für die aktuelle Runde.
 
 ## 4. Rundenablauf
 
@@ -71,6 +78,9 @@ Nach den Transfers wird die Reihenfolge festgelegt:
 - Der Spieler mit den meisten Siegpunkten beginnt.
 - Danach folgen die übrigen Spieler in absteigender Reihenfolge ihrer Siegpunkte.
 - Bei gleicher Punktzahl wird die Reihenfolge zufällig ausgelost.
+- Vor der endgültigen Festlegung der Reihenfolge kann ein Spieler einen Taler einlösen und seinen Rang für diese Runde festlegen. Die übrigen Spieler rücken um die belegten Plätze nach; ihre relative Reihenfolge bleibt erhalten.
+- Wird ein Rang mehrfach gewählt, erhält ihn der Spieler, der seinen Taler zuletzt einlöst. Der bisherige Inhaber und die dahinterstehenden Spieler rücken jeweils einen Platz nach hinten.
+- Die Rangwahl verändert keine Siegpunkte und wird in der nächsten Runde nicht übernommen.
 - Die ermittelte Reihenfolge gilt für die Angriffe der Runde.
 - Die Reihenfolge wird erst nach der Punkteverteilung berechnet und allen Spielern vor Beginn der geheimen Angriffsplanung angezeigt.
 
@@ -87,6 +97,8 @@ Ein Angriff besteht aus:
 Nur Ziele innerhalb der markierten Doppellinie dürfen angegriffen werden.
 
 In der Anwendung gibt jeder Spieler seinen Angriff einzeln ein. Danach wird die Eingabe verborgen, bis alle Spieler ihre Angriffe festgelegt haben.
+
+Beim Einlösen eines Talers für die Lebenspunkte-Ansicht erscheint ein Fenster mit den aktuellen Lebenspunkten der Monster. Beim späteren Angriff erscheint kein zusätzliches Fenster. Stattdessen sind die dann aktuellen Lebenspunkte in der Angriffsansicht des einlösenden Spielers sichtbar; bereits ausgeführte Angriffe dieser Runde werden berücksichtigt. Für andere Spieler bleiben die Lebenspunkte weiterhin verborgen.
 
 ### 4.4 Angriffe automatisch ausführen
 
@@ -336,6 +348,9 @@ Diese Punkte sind aus der Beschreibung noch nicht eindeutig genug und müssen en
 47. Soll die Anwendung einen Spielstand speichern und später fortsetzen können?
 48. Soll es eine Zurück-Funktion für Fehleingaben geben?
 
+### Taler
+49. Wenn mehrere Spieler in derselben Runde einen Taler für eine Rangwahl einsetzen, wie wird die Reihenfolge ihrer Wahl bestimmt und wie werden doppelte Rangwünsche behandelt?
+
 ## 11. Sinnvolle erste Entscheidungen
 
 Für den ersten spielbaren Prototypen würde ich zunächst diese Regeln festlegen:
@@ -414,6 +429,7 @@ Die folgenden Antworten beziehen sich auf die Nummern im Abschnitt **Offene Frag
 46. Angezeigt werden dürfen die Reihenfolge der Monster und Spieler sowie deren Siegpunkte. Bei Monstern wird der maximale Siegpunktwert angezeigt.
 47. Das Speichern und spätere Fortsetzen eines Spielstands kann noch erwogen werden.
 48. Ja, eine Zurück-Funktion könnte bei Fehleingaben helfen.
+49. Bei einer Rangwahl rücken die anderen Spieler nach hinten. Wird derselbe Rang erneut gewählt, erhält ihn der zuletzt einlösende Spieler; der bisherige Inhaber rückt auf den nächsten Platz nach hinten. Wählt zum Beispiel ein zweiter Spieler den dritten Platz, rückt der erste Taler-Spieler auf den vierten Platz.
 
 ## 13. Umsetzungsstand
 

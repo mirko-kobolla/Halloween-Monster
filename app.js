@@ -85,6 +85,8 @@ function render() {
     return;
   }
   if (state.phase === "orderPreview") renderOrderPreview();
+  else if (state.phase === "coinHandoff") renderCoinHandoff();
+  else if (state.phase === "coinUse") renderCoinUse();
   else if (state.phase === "handoff") renderHandoff();
   else if (state.phase === "attack") renderAttackForm();
   else if (state.phase === "results") renderResults();
@@ -197,8 +199,9 @@ function monsterCard(monster, index, selectable, selected = false, disabled = fa
   const classNames = ["monster-card", selected ? "selected" : "", disabled ? "disabled" : ""].filter(Boolean).join(" ");
   const clickAttrs = selectable && !disabled ? `data-action="select-target" data-index="${index}"` : "";
   const frozen = monster.frozenBy ? " · Eis" : "";
+  const showHp = state.testMode || (state.phase === "attack" && state.hpPeekPlayers?.includes(state.currentPlanner));
   return `<article class="${classNames}" style="--art-color:${escapeHTML(monster.color)}" ${clickAttrs ? `role="button" tabindex="0" ${clickAttrs}` : ""}>
-    <div class="monster-card-top"><span class="monster-position">${String(index + 1).padStart(2, "0")}${frozen}</span>${state.testMode ? `<span class="monster-hp">${monster.hp} ♥</span>` : ""}</div>
+    <div class="monster-card-top"><span class="monster-position">${String(index + 1).padStart(2, "0")}${frozen}</span>${showHp ? `<span class="monster-hp">${monster.hp} ♥</span>` : ""}</div>
     <div class="monster-art">${monsterArt(monster.color)}</div>
     <div class="monster-card-bottom"><h3 class="monster-name">${escapeHTML(monster.name)}</h3><span class="monster-reward"><b>${monster.points} SP</b>${escapeHTML(monster.loot.join(" · "))}</span></div>
   </article>`;
@@ -288,6 +291,7 @@ function renderTransfer() {
   const alliances = allianceGroups();
   const weaponHolders = state.players.filter((player) => player.weapons.length);
   const availableWeapons = [...new Set(weaponHolders.flatMap((player) => player.weapons))];
+  const talerHolders = state.players.filter((player) => player.talers > 0);
   const weaponTransferForm = availableWeapons.length ? `
     <form id="weapon-transfer-form">
       <div class="transfer-form">
@@ -299,9 +303,19 @@ function renderTransfer() {
       <p class="transfer-message" id="weapon-transfer-message" role="status"></p>
       <button class="secondary-button" type="submit">Spezialwaffe weitergeben ${icon("arrow")}</button>
     </form>` : `<p class="form-note">Es gibt keine Spezialwaffen zum Weitergeben.</p>`;
+  const talerTransferForm = talerHolders.length ? `
+    <form id="taler-transfer-form">
+      <div class="transfer-form">
+        <select class="select-input" name="from" aria-label="Taler abgeben">${talerHolders.map((player) => `<option value="${player.id}">${escapeHTML(player.name)} · ${player.talers} Taler</option>`).join("")}</select>
+        <select class="select-input" name="to" aria-label="Taler erhalten">${state.players.map((player) => `<option value="${player.id}">${escapeHTML(player.name)}</option>`).join("")}</select>
+      </div>
+      <p class="form-note">Es wird jeweils ein Taler weitergegeben.</p>
+      <p class="transfer-message" id="taler-transfer-message" role="status"></p>
+      <button class="secondary-button" type="submit">Taler weitergeben ${icon("arrow")}</button>
+    </form>` : `<p class="form-note">Es gibt keine Taler zum Weitergeben.</p>`;
   const allocationButton = `<button class="secondary-button allocation-open" type="button" data-action="open-allocation" ${alliances.length ? "" : "disabled"}>Siegpunkte neu verteilen ${icon("arrow")}</button>`;
   const allocationHint = alliances.length ? "" : `<p class="form-note">Für die Neuverteilung müssen mindestens zwei Spieler derselben Allianz angehören. Lege die Allianz beim Spielstart fest.</p>`;
-  const content = `<div class="game-layout"><section><div class="board-heading"><h2>Schlachtfeld</h2><span>Angriffsziele</span></div>${renderBoard()}</section><aside class="sidebar"><section class="side-section"><div class="side-title"><h2>Allianzverteilung</h2><span>vor den Angriffen</span></div><p class="form-note allocation-note">Wähle eine Allianz, um ihre Siegpunkte neu zuzuordnen. Die Rangfolge bleibt hier verborgen.</p>${allocationButton}${allocationHint}</section><section class="side-section"><div class="side-title"><h2>Spezialwaffen</h2><span>Übergabe</span></div>${weaponTransferForm}</section><div class="sidebar-actions"><button class="primary-button" type="button" data-action="start-planning">Angriffe planen ${icon("arrow")}</button></div></aside></div>${renderAllocationDialog()}`;
+  const content = `<div class="game-layout"><section><div class="board-heading"><h2>Schlachtfeld</h2><span>Angriffsziele</span></div>${renderBoard()}</section><aside class="sidebar"><section class="side-section"><div class="side-title"><h2>Allianzverteilung</h2><span>vor den Angriffen</span></div><p class="form-note allocation-note">Wähle eine Allianz, um ihre Siegpunkte neu zuzuordnen. Die Rangfolge bleibt hier verborgen.</p>${allocationButton}${allocationHint}</section><section class="side-section"><div class="side-title"><h2>Spezialwaffen</h2><span>Übergabe</span></div>${weaponTransferForm}</section><section class="side-section"><div class="side-title"><h2>Taler</h2><span>Übergabe</span></div>${talerTransferForm}</section><div class="sidebar-actions"><button class="primary-button" type="button" data-action="start-planning">Angriffe planen ${icon("arrow")}</button></div></aside></div>${renderAllocationDialog()}`;
   renderGameShell(content, "Rundenbeginn", "Punkte teilen, dann angreifen", "Verteile Allianzpunkte neu, bevor die Angriffsreihenfolge festgelegt wird.");
 }
 
@@ -310,8 +324,71 @@ function renderOrderPreview() {
     const player = state.players.find((item) => item.id === playerId);
     return `<div class="score-row"><span class="score-index">${String(index + 1).padStart(2, "0")}</span><span class="score-name">${escapeHTML(player.name)}</span><strong class="score-value">${player.points} SP</strong></div>`;
   }).join("");
-  const content = `<section class="resolve-screen order-preview"><p class="eyebrow">Vor den Angriffen</p><h2>Diese Reihenfolge gilt für die Runde</h2><p class="intro">Die Reihenfolge richtet sich nach den Siegpunkten. Bei Gleichstand wird zufällig ausgelost.</p><div class="score-list order-list">${rows}</div><div class="resolve-actions"><button class="primary-button" type="button" data-action="confirm-order">Reihenfolge bestätigen und Angriffe starten ${icon("arrow")}</button></div></section>`;
+  const content = `<section class="resolve-screen order-preview"><p class="eyebrow">Vor den Angriffen</p><h2>Diese Reihenfolge gilt für die Runde</h2><p class="intro">Die Reihenfolge richtet sich nach den Siegpunkten. Bei Gleichstand wird zufällig ausgelost. Eingelöste Taler sind berücksichtigt.</p><div class="score-list order-list">${rows}</div><div class="resolve-actions"><button class="primary-button" type="button" data-action="confirm-order">Reihenfolge bestätigen und Angriffe starten ${icon("arrow")}</button></div></section>`;
   renderGameShell(content, "Reihenfolge", "Angriffsreihenfolge", "Die Reihenfolge wird erst nach der Punkteverteilung gezeigt.");
+}
+
+function currentCoinPlayer() {
+  const playerId = state.coinPlayers?.[state.coinPlayerIndex];
+  return state.players.find((player) => player.id === playerId);
+}
+
+function renderCoinHandoff() {
+  const player = currentCoinPlayer();
+  if (!player) {
+    state.phase = "orderPreview";
+    saveGame();
+    render();
+    return;
+  }
+  app.innerHTML = `<section class="handoff"><div class="handoff-content"><div class="handoff-seal" aria-hidden="true">${state.coinPlayerIndex + 1}</div><p class="eyebrow">Taler einsetzen · ${state.coinPlayerIndex + 1} von ${state.coinPlayers.length}</p><h1>Weitergeben an<br><em>${escapeHTML(player.name)}</em></h1><p>Bitte das Gerät nur an ${escapeHTML(player.name)} weitergeben. Die Taler-Aktionen sind persönlich.</p><button class="primary-button" type="button" data-action="show-coin-actions">Nur ${escapeHTML(player.name)} sieht die Taler-Aktionen ${icon("arrow")}</button></div></section>`;
+}
+
+function renderCoinUse() {
+  const player = currentCoinPlayer();
+  if (!player) {
+    finishCoinActions();
+    return;
+  }
+  const rankOptions = state.order.map((playerId, index) => `<option value="${index + 1}">${index + 1}. Platz</option>`).join("");
+  const monsters = state.field.filter((monster) => monster && !monster.empty);
+  const hpRows = monsters.length ? monsters.map((monster) => `<div class="coin-hp-row"><span>${escapeHTML(monster.name)}</span><strong>${monster.hp} / ${monster.maxHp} ♥</strong></div>`).join("") : '<p class="form-note">Es sind keine Monster auf dem Schlachtfeld.</p>';
+  const content = `<section class="resolve-screen coin-use"><p class="eyebrow">Persönliche Taler-Aktion</p><h2>${escapeHTML(player.name)}, du hast ${player.talers} Taler.</h2><p class="intro">Jeder eingelöste Taler ermöglicht eine Aktion. Du kannst mehrere Taler einzeln einsetzen.</p><div class="coin-action-grid"><section class="coin-action"><h3>Lebenspunkte ansehen</h3><p>Ein Fenster zeigt dir den aktuellen Stand. Bei deinem Angriff siehst du die dann aktuellen Lebenspunkte erneut.</p><button class="secondary-button" type="button" data-action="redeem-hp-taler" ${player.talers < 1 ? "disabled" : ""}>1 Taler einlösen ${icon("arrow")}</button></section><section class="coin-action"><h3>Rang festlegen</h3><p>Wähle deinen Platz für diese Runde. Die anderen Spieler rücken entsprechend nach.</p><form id="coin-rank-form"><label class="field-label" for="coin-rank">Dein Platz</label><select class="select-input" id="coin-rank" name="rank">${rankOptions}</select><button class="secondary-button" type="submit" ${player.talers < 1 ? "disabled" : ""}>1 Taler einlösen ${icon("arrow")}</button></form></section></div><div class="resolve-actions coin-finish"><button class="primary-button" type="button" data-action="finish-coin-actions">Fertig mit Taler-Aktionen ${icon("arrow")}</button></div><dialog class="allocation-dialog" id="taler-hp-dialog" aria-labelledby="taler-hp-title"><div class="allocation-dialog-inner"><div class="allocation-heading"><div><p class="eyebrow">Taler eingelöst</p><h2 id="taler-hp-title">Aktuelle Monster-Lebenspunkte</h2></div></div><p class="allocation-intro">Diese Anzeige ist nur für ${escapeHTML(player.name)} bestimmt.</p><div class="coin-hp-list">${hpRows}</div><div class="allocation-actions"><button class="primary-button" type="button" data-action="close-hp-reveal">Weiter ${icon("arrow")}</button></div></div></dialog></section>`;
+  renderGameShell(content, "Taler einlösen", "Sonderaktionen vor der Reihenfolge", "Die Angriffsreihenfolge wird erst nach diesen persönlichen Aktionen bestätigt.");
+  const dialog = document.querySelector("#taler-hp-dialog");
+  if (state.hpRevealOpen && dialog && !dialog.open) dialog.showModal();
+}
+
+function finishCoinActions() {
+  state.hpRevealOpen = false;
+  state.coinPlayerIndex += 1;
+  if (state.coinPlayerIndex >= state.coinPlayers.length) state.phase = "orderPreview";
+  else state.phase = "coinHandoff";
+  saveGame();
+  render();
+}
+
+function redeemHpTaler() {
+  const player = currentCoinPlayer();
+  if (!player || player.talers < 1) return;
+  player.talers -= 1;
+  state.hpPeekPlayers ??= [];
+  if (!state.hpPeekPlayers.includes(player.id)) state.hpPeekPlayers.push(player.id);
+  state.hpRevealOpen = true;
+  saveGame();
+  render();
+}
+
+function redeemRankTaler(form) {
+  const player = currentCoinPlayer();
+  const rank = Number(new FormData(form).get("rank"));
+  if (!player || player.talers < 1 || !Number.isInteger(rank) || rank < 1 || rank > state.order.length) return;
+  const currentIndex = state.order.indexOf(player.id);
+  if (currentIndex >= 0) state.order.splice(currentIndex, 1);
+  state.order.splice(rank - 1, 0, player.id);
+  player.talers -= 1;
+  saveGame();
+  render();
 }
 
 function beginPlanning() {
@@ -324,7 +401,11 @@ function beginPlanning() {
   state.attacks = {};
   state.plannerIndex = 0;
   state.currentPlanner = null;
-  state.phase = "orderPreview";
+  state.coinPlayers = state.order.filter((playerId) => state.players.find((player) => player.id === playerId)?.talers > 0);
+  state.coinPlayerIndex = 0;
+  state.hpPeekPlayers = [];
+  state.hpRevealOpen = false;
+  state.phase = state.coinPlayers.length ? "coinHandoff" : "orderPreview";
   saveGame();
   render();
 }
@@ -348,7 +429,9 @@ function currentPlayer() {
 function renderAttackForm() {
   const player = currentPlayer();
   const choices = ["Dolch", ...player.weapons];
-  const content = `<section class="attack-form"><p class="eyebrow">Geheime Eingabe · Spieler ${state.plannerIndex + 1} von ${state.order.length}</p><h2>${escapeHTML(player.name)}, wähle deinen Angriff.</h2><p class="intro">Du hast ${player.points} Siegpunkte. Dein Dolch bleibt immer verfügbar.</p><div class="battlefield" id="target-field">${state.field.map((monster, index) => monsterCard(monster, index, true)).join("") || '<p class="board-empty">Keine Monster mehr auf dem Feld.</p>'}</div>${renderNextReserve()}<div class="attack-tools"><label><span class="field-label">Waffe</span><select class="select-input weapon-select" id="weapon-choice">${choices.map((weapon) => `<option>${escapeHTML(weapon)}</option>`).join("")}</select></label><label><span class="field-label">Zweites Ziel · nur Schwerter</span><select class="select-input weapon-select" id="second-target"><option value="">Kein zweites Ziel</option>${state.field.map((monster, index) => `<option value="${index}">${index + 1} · ${escapeHTML(monster.name)}</option>`).join("")}</select></label></div><p class="attack-help" id="attack-help">Wähle ein Monster auf dem Schlachtfeld.</p><button class="primary-button attack-submit" type="button" data-action="submit-attack" disabled>Angriff verdeckt abgeben ${icon("arrow")}</button></section>`;
+  const canSeeHp = state.testMode || state.hpPeekPlayers?.includes(player.id);
+  const hpNote = canSeeHp && !state.testMode ? "Durch deinen Taler siehst du die aktuellen Lebenspunkte der Monster." : "";
+  const content = `<section class="attack-form"><p class="eyebrow">Geheime Eingabe · Spieler ${state.plannerIndex + 1} von ${state.order.length}</p><h2>${escapeHTML(player.name)}, wähle deinen Angriff.</h2><p class="intro">Du hast ${player.points} Siegpunkte. Dein Dolch bleibt immer verfügbar.</p>${hpNote ? `<p class="coin-hp-note">${escapeHTML(hpNote)}</p>` : ""}<div class="battlefield" id="target-field">${state.field.map((monster, index) => monsterCard(monster, index, true)).join("") || '<p class="board-empty">Keine Monster mehr auf dem Feld.</p>'}</div>${renderNextReserve()}<div class="attack-tools"><label><span class="field-label">Waffe</span><select class="select-input weapon-select" id="weapon-choice">${choices.map((weapon) => `<option>${escapeHTML(weapon)}</option>`).join("")}</select></label><label><span class="field-label">Zweites Ziel · nur Schwerter</span><select class="select-input weapon-select" id="second-target"><option value="">Kein zweites Ziel</option>${state.field.map((monster, index) => `<option value="${index}">${index + 1} · ${escapeHTML(monster.name)}</option>`).join("")}</select></label></div><p class="attack-help" id="attack-help">Wähle ein Monster auf dem Schlachtfeld.</p><button class="primary-button attack-submit" type="button" data-action="submit-attack" disabled>Angriff verdeckt abgeben ${icon("arrow")}</button></section>`;
   renderGameShell(content, "Private Eingabe", "Dein Zug", "Die anderen Spieler sehen weder Ziel noch Waffe.");
   updateAttackHelp();
 }
@@ -482,6 +565,9 @@ function renderResults() {
 function nextRound() {
   state.round += 1;
   state.phase = state.field.some((monster) => monster && !monster.empty) || state.reserve.length ? "transfer" : "ended";
+  state.hpPeekPlayers = [];
+  state.coinPlayers = [];
+  state.coinPlayerIndex = 0;
   saveGame();
   render();
 }
@@ -541,6 +627,20 @@ function transferWeapon(form) {
   render();
 }
 
+function transferTaler(form) {
+  const data = new FormData(form);
+  const sender = state.players.find((player) => player.id === data.get("from"));
+  const receiver = state.players.find((player) => player.id === data.get("to"));
+  const error = document.querySelector("#taler-transfer-message");
+  const fail = (text) => { if (error) error.textContent = text; };
+  if (!sender || !receiver || sender.id === receiver.id) return fail("Wähle zwei verschiedene Spieler aus.");
+  if (sender.talers < 1) return fail("Dieser Spieler hat keinen Taler mehr.");
+  sender.talers -= 1;
+  receiver.talers += 1;
+  saveGame();
+  render();
+}
+
 app.addEventListener("input", (event) => {
   if (event.target.matches("[data-player-name]")) draftPlayers[Number(event.target.dataset.playerName)].name = event.target.value;
   if (event.target.matches("[data-player-alliance]")) draftPlayers[Number(event.target.dataset.playerAlliance)].alliance = event.target.value;
@@ -577,6 +677,14 @@ app.addEventListener("submit", (event) => {
     event.preventDefault();
     transferWeapon(event.target);
   }
+  if (event.target.id === "taler-transfer-form") {
+    event.preventDefault();
+    transferTaler(event.target);
+  }
+  if (event.target.id === "coin-rank-form") {
+    event.preventDefault();
+    redeemRankTaler(event.target);
+  }
 });
 
 document.addEventListener("click", (event) => {
@@ -611,6 +719,18 @@ document.addEventListener("click", (event) => {
     document.querySelector("#alliance-dialog")?.showModal();
   } else if (action === "close-allocation") {
     document.querySelector("#alliance-dialog")?.close();
+  } else if (action === "show-coin-actions") {
+    state.phase = "coinUse";
+    saveGame();
+    render();
+  } else if (action === "redeem-hp-taler") {
+    redeemHpTaler();
+  } else if (action === "close-hp-reveal") {
+    state.hpRevealOpen = false;
+    saveGame();
+    render();
+  } else if (action === "finish-coin-actions") {
+    finishCoinActions();
   } else if (action === "show-attack") {
     state.phase = "attack";
     render();
