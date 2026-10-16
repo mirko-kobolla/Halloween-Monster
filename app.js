@@ -3,12 +3,12 @@ const MONSTERS = [
   { name: "Mumie", points: 7, loot: ["Gift", "Granate"], color: "#c7a878" },
   { name: "Kürbis", points: 5, loot: ["Gift"], color: "#e58c49" },
   { name: "Geist", points: 9, loot: ["Taler", "Dynamit"], color: "#b7c9c2" },
-  { name: "Medusa", points: 15, loot: ["Taler"], color: "#92a66f" },
+  { name: "Medusa", points: 15, loot: ["Taler"], color: "#d8aa82" },
   { name: "Vampir", points: 10, loot: ["Granate"], color: "#c36c66" },
-  { name: "Baum", points: 9, loot: ["Eis", "Gekreuzte Schwerter"], color: "#8d9b74" },
+  { name: "Baum", points: 9, loot: ["Eis", "Gekreuzte Schwerter"], color: "#a87852" },
   { name: "Sensenmann", points: 16, loot: ["Gekreuzte Schwerter", "Granate", "Taler"], color: "#b6b8a8" },
   { name: "Spinne", points: 7, loot: ["Gift", "Eis"], color: "#a98574" },
-  { name: "Teufel", points: 10, loot: ["Eis", "Dynamit"], color: "#dc765c" },
+  { name: "Teufel", points: 10, loot: ["Eis", "Dynamit"], color: "#dc3b49" },
   { name: "Hexe", points: 15, loot: ["Dynamit", "Taler"], color: "#9bb0a0" },
   { name: "Frankenstein", points: 12, loot: ["Granate", "Gekreuzte Schwerter"], color: "#81a38a" },
   { name: "Werwolf", points: 9, loot: ["Granate"], color: "#b38b68" }
@@ -44,8 +44,19 @@ function loadGame() {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!saved || !Array.isArray(saved.players) || !saved.players.length) return null;
     let migrated = false;
+    const treeColor = MONSTERS.find((monster) => monster.name === "Baum").color;
+    const devilColor = MONSTERS.find((monster) => monster.name === "Teufel").color;
     [...(saved.field ?? []), ...(saved.reserve ?? [])].forEach((monster) => {
-      if (!monster || monster.empty || monster.name !== "Vampir" || monster.points === 10) return;
+      if (!monster || monster.empty) return;
+      if (monster.name === "Baum" && monster.color !== treeColor) {
+        monster.color = treeColor;
+        migrated = true;
+      }
+      if (monster.name === "Teufel" && monster.color !== devilColor) {
+        monster.color = devilColor;
+        migrated = true;
+      }
+      if (monster.name !== "Vampir" || monster.points === 10) return;
       const oldMaxHp = monster.maxHp ?? monster.points;
       const damageTaken = Math.max(0, oldMaxHp - monster.hp);
       monster.points = 10;
@@ -90,8 +101,155 @@ function icon(name) {
   return `<svg viewBox="0 0 24 24" aria-hidden="true">${paths[name] ?? paths.arrow}</svg>`;
 }
 
-function monsterArt(color) {
-  return `<svg viewBox="0 0 72 72" role="img" aria-label="Monsterillustration" style="color:${escapeHTML(color)}"><path d="M13 27 8 12l15 8c8-5 18-5 26 0l15-8-5 18c4 8 3 19-3 26-5 6-13 9-21 9s-16-3-21-9c-6-7-7-19-1-29Z"/><path d="M23 37c3-4 8-4 11 0v10c-4 4-8 4-11 0Zm15 0c3-4 8-4 11 0v10c-4 4-8 4-11 0Z" fill="#171a16"/><path d="m31 53 5 7 5-7" fill="#f3eddb"/></svg>`;
+function monsterArt(monster) {
+  const art = monster.name === "Kürbis" ? `
+    <path d="M33 24c-1-6 1-11 6-14 2 5 2 9 0 14l8 3H25l8-3Z" fill="#89966a" stroke="#4d6044" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M36 21c-7-4-17-1-22 6-7 10-5 25 3 33 5 5 12 7 19 4 7 3 14 1 19-4 8-8 10-23 3-33-5-7-15-10-22-6Z" fill="currentColor" stroke="#743f26" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M36 23c-5 9-5 30 0 40M31 23c-5 9-6 27-2 39m12-39c5 9 6 27 2 39" fill="none" stroke="#ad5e32" stroke-width="2" opacity=".8"/>
+    <path d="m18 35 12-2-3 11-4 2-5-5Zm36 0-12-2 3 11 4 2 5-5ZM36 39l-5 10h10l-5-10ZM22 51q7-2 14 2 7-4 14-2-2 6-8 9l-6-3-6 3q-6-3-8-9Z" fill="#171a16" stroke="#542d1d" stroke-width="1.5" stroke-linejoin="round"/>
+  ` : monster.name === "Mumie" ? `
+    <g fill="currentColor" stroke="#554632" stroke-width="1.6" stroke-linejoin="round">
+      <path d="M30 7Q36 4 42 7L43 17 41 22H31L29 17Z"/>
+      <path d="m29 23-10-4-5-6-5 1-3 6 5 7 14 7Zm14 0 10-4 5-6 5 1 3 6-5 7-14 7Z"/>
+      <path d="M28 22Q36 19 44 22L47 43 42 48H30L25 43Z"/>
+      <path d="m29 44 10 2-7 14-3 8-9-3 5-9Zm11 1 8-2 3 15 7 8-8 5-9-8-5-12Z"/>
+    </g>
+    <g fill="none" stroke="#554632" stroke-width="1.35" stroke-linecap="round">
+      <path d="m30 10 12 3m-12 1 12 3m-10 4 8-7M8 18l8 4m-10 1 9 4m-2-13 2 9m39-5-8 4m10 1-9 4m2-13-2 9M28 26l15 5m-17 1 19 6m-17 1 18 5m-14-16 13 13m-18 5 8 5m-11 2 9 5m-7 3 6 3m12-17-7 5m10 1-8 5m10 1-7 4"/>
+    </g>
+  ` : monster.name === "Geist" ? `
+    <path d="M36 7C22 7 15 18 15 32l-9-4C2 34 3 47 8 53l5-9v14l8-3 1 8 8-4 6 9 7-9 8 4 1-8 8 3V44l5 9c5-6 6-19 2-25l-9 4C57 18 50 7 36 7Z" fill="currentColor" stroke="#71817a" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M18 30c3-4 8-6 13-3l-1 9c-2 4-8 4-11 1-2-2-2-5-1-7Zm23-3c5-3 10-1 13 3 1 2 1 5-1 7-3 3-9 3-11-1l-1-9Z" fill="#171a16"/>
+    <path d="M19 45c2 3 1 7 0 10m34-10c-2 3-1 7 0 10" fill="none" stroke="#9eafa9" stroke-width="1.5" stroke-linecap="round"/>
+  ` : monster.name === "Teufel" ? `
+    <path d="M44 43c9-5 20-2 21 4 1 4-3 8-8 7l4-5-5-2-5 5-7-2Z" fill="#a91f31" stroke="#171a16" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M26 22c-6-2-9-7-8-13 5 4 9 4 13 5Zm20 0c6-2 9-7 8-13-5 4-9 4-13 5Z" fill="#c72d3c" stroke="#171a16" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M29 39c-6 2-9 7-10 14l-5 13h44l-5-13c-1-7-4-12-10-14l-7 6Z" fill="#dc3b49" stroke="#171a16" stroke-width="2" stroke-linejoin="round"/>
+    <path d="m25 57-5 9h12l4-10 4 10h12l-5-9Z" fill="#b82435" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M36 17c-8 0-13 6-12 14 1 7 5 11 12 14 7-3 11-7 12-14 1-8-4-14-12-14Z" fill="#ed4650" stroke="#171a16" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M28 29q4-4 8 0-4 5-8 0Zm8 0q4-4 8 0-4 5-8 0Z" fill="#171a16"/>
+    <path d="M31 36q5-3 10 0l-2 5h-6Z" fill="#171a16"/>
+    <path d="m32 36 2 5 2-5Zm5 0 2 5 2-5Z" fill="#f1e7cf" stroke="#171a16" stroke-width=".7" stroke-linejoin="round"/>
+    <path d="M16 24v42" fill="none" stroke="#171a16" stroke-width="4" stroke-linecap="round"/>
+    <path d="M16 25v40" fill="none" stroke="#c59a4e" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M7 25V11l6 9 3-15 3 15 6-9v14" fill="none" stroke="#171a16" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M8 23V13l5 8 3-12 3 12 5-8v10" fill="none" stroke="#d4b263" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  ` : monster.name === "Spinne" ? `
+    <g fill="none" stroke="#d7d9d2" stroke-width=".8" opacity=".65">
+      <path d="M36 7v58M7 36h58M15 15l42 42M57 15 15 57M22 9l28 54M9 22l54 28M50 9 22 63M9 50l54-28"/>
+      <path d="M25 17q11 8 22 0M17 25q8 11 0 22m30-30q-11 8-22 0m30 8q-8 11 0 22M17 47q11-8 22 0m8 8q-11-8-22 0M55 47q-11-8-22 0m-8 8q11-8 22 0"/>
+    </g>
+    <g class="spider-legs" fill="none" stroke="#241a22" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M30 30 23 24 18 15 10 11"/>
+      <path d="M29 34 19 31 12 24 5 25"/>
+      <path d="M29 39 19 41 12 47 5 47"/>
+      <path d="M31 43 23 49 20 58 13 63"/>
+      <path d="M42 30 49 24 54 15 62 11"/>
+      <path d="M43 34 53 31 60 24 67 25"/>
+      <path d="M43 39 53 41 60 47 67 47"/>
+      <path d="M41 43 49 49 52 58 59 63"/>
+    </g>
+    <ellipse cx="36" cy="42" rx="8" ry="11" fill="#44313c" stroke="#171a16" stroke-width="2"/>
+    <ellipse cx="36" cy="29" rx="7" ry="8" fill="#352631" stroke="#171a16" stroke-width="2"/>
+    <path d="M32 42q4-4 8 0l-4 6Z" fill="#bd3047"/>
+    <circle cx="33" cy="27" r="1.7" fill="#f1e7cf"/><circle cx="39" cy="27" r="1.7" fill="#f1e7cf"/>
+  ` : monster.name === "Sensenmann" ? `
+    <path d="M15 22C21 11 39 5 60 6 47 11 36 17 28 28l-9 11c2-8 1-13-4-17Z" fill="#e1e5e7" stroke="#171a16" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M15 21 24 67" fill="none" stroke="#171a16" stroke-width="5" stroke-linecap="round"/>
+    <path d="M15 21 24 67" fill="none" stroke="#a16b45" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M29 40c-7 2-11 8-12 18L10 68h52l-7-10c-1-10-5-16-12-18L36 49Z" fill="#383844" stroke="#171a16" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M28 43 24 63m20-20 4 20" fill="none" stroke="#555562" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M36 10c-11 0-17 8-16 19 1 10 7 17 16 22 9-5 15-12 16-22 1-11-5-19-16-19Z" fill="#292a35" stroke="#171a16" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M36 17c-7 0-11 5-10 12l1 7c0 3 2 5 5 6v5h8v-5c3-1 5-3 5-6l1-7c1-7-3-12-10-12Z" fill="#f1e7cf" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle cx="31" cy="29" r="3.5" fill="#171a16"/><circle cx="41" cy="29" r="3.5" fill="#171a16"/>
+    <path d="m36 32-3 5h6l-3-5Z" fill="#171a16"/>
+    <path d="M31 41h10v4H31Z" fill="#171a16"/>
+    <path d="M34 41v4m3-4v4m3-4v4" stroke="#f1e7cf" stroke-width="1"/>
+  ` : monster.name === "Baum" ? `
+    <g fill="none" stroke="#40291c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M33 37C28 29 28 21 29 13m-2 11-8-5-4-8m6 7-9 1m14-9-5-7M39 36c5-8 7-16 8-25m-4 14 10-7 3-8m-5 7 10 1m-15-7 5-7M31 40c-8-4-14-9-18-16m9 12-11-1-7-5m12 2-4-8M42 40c8-4 14-9 18-16m-9 12 11-1 7-5m-12 2 4-8M29 46c-8-1-14-4-19-9m8 6-11 2M43 46c8-1 14-4 19-9m-8 6 11 2"/>
+    </g>
+    <path d="M25 69c3-8 2-13 0-18-2-6 0-11 4-16-2-6-2-12 1-19h12c3 7 3 13 1 19 4 5 6 10 4 16-2 5-3 10 0 18l-8-4-3 5-5-5Z" fill="#4b3427" stroke="#40291c" stroke-width="2" stroke-linejoin="round"/>
+    <g fill="none" stroke="#916844" stroke-width="1.6" stroke-linecap="round">
+      <path d="M34 51c-1-6 1-10 2-14m2 17c1 4 0 8 2 12m-9-18-4-5m14 5 4-5M31 63l-9 6m18-6 10 6"/>
+    </g>
+    <path d="M27 42q5-5 9 0l-2 5h-6Zm9 0q5-5 9 0l-1 5h-6Z" fill="#f1e7cf" stroke="#40291c" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M29 51h14l-2 7-3-3-2 4-3-4-2 3Z" fill="#f1e7cf" stroke="#40291c" stroke-width="1.5" stroke-linejoin="round"/>
+  ` : monster.name === "Vampir" ? `
+    <path d="M23 43 12 46 5 55l15-3 16 10 16-10 15 3-7-9-11-3Z" fill="#ad2634" stroke="#171a16" stroke-width="2" stroke-linejoin="round"/>
+    <path d="m24 42-8 3 10 11 10-6 10 6 10-11-8-3-12 7Z" fill="#781c2a" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M22 28 16 25l2 13 7 2Zm28 0 6-3-2 13-7 2Z" fill="#efd5c4" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M22 24c3-8 10-12 17-11 10 1 15 8 12 19l-2 10c-2 8-7 13-13 16-7-3-12-8-14-16l-2-9Z" fill="#efd5c4" stroke="#171a16" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M19 31c-2-12 6-21 17-21 12 0 19 9 16 21l-7-8-4 5-5-7-5 7-5-5Z" fill="#171a16" stroke="#171a16" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M25 36q5-4 10 0-5 5-10 0Zm12 0q5-4 10 0-5 5-10 0Z" fill="#fff1e8" stroke="#171a16" stroke-width="1.2"/>
+    <circle cx="30" cy="36" r="2" fill="#bd3047"/><circle cx="42" cy="36" r="2" fill="#bd3047"/>
+    <path d="m34 38-2 5h5l-3-5Z" fill="#d09c88"/>
+    <path d="M28 46q8-4 16 0v4q-8 7-16 0Z" fill="#171a16"/>
+    <path d="m30 46 3 7 2-7Zm10 0 2 7 3-7Z" fill="#fff1e8" stroke="#171a16" stroke-width=".8" stroke-linejoin="round"/>
+    <path d="M25 33q5-3 10 0m2 0q5-3 10 0" fill="none" stroke="#171a16" stroke-width="1.8" stroke-linecap="round"/>
+  ` : monster.name === "Medusa" ? `
+    <g fill="none" stroke="#171a16" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 31C13 29 8 22 10 15c1-5 7-7 10-3 2 3 0 7-4 7m12 8C22 17 24 6 31 5c6-1 8 6 3 10m6 12C47 14 53 7 59 10c5 3 3 9-2 11m-8 10c10-2 16-8 14-15-1-5-6-6-9-3M20 40C9 37 6 45 11 51c3 4 8 2 9-2m32-9c11-3 14 5 9 11-3 4-8 2-9-2"/>
+    </g>
+    <g fill="none" stroke="#78c83f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 31C13 29 8 22 10 15c1-5 7-7 10-3 2 3 0 7-4 7m12 8C22 17 24 6 31 5c6-1 8 6 3 10m6 12C47 14 53 7 59 10c5 3 3 9-2 11m-8 10c10-2 16-8 14-15-1-5-6-6-9-3M20 40C9 37 6 45 11 51c3 4 8 2 9-2m32-9c11-3 14 5 9 11-3 4-8 2-9-2"/>
+    </g>
+    <g fill="#78c83f" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M16 20c-4 0-7-3-6-6 1-4 6-5 9-2l3 4-3 4Z"/>
+      <path d="M31 11c-3-2-4-6-1-9 3-3 8-1 8 3l-1 5-4 3Z"/>
+      <path d="M56 18c0-4 3-7 7-6 4 1 5 6 2 9l-4 2-4-3Z"/>
+      <path d="M12 48c-3-2-3-6 0-8 3-2 7 0 7 4l-2 4-4 2Z"/>
+      <path d="M57 48c3-2 3-6 0-8-3-2-7 0-7 4l2 4 4 2Z"/>
+    </g>
+    <g fill="#171a16"><circle cx="15" cy="15" r="1"/><circle cx="34" cy="6" r="1"/><circle cx="61" cy="15" r="1"/><circle cx="15" cy="43" r="1"/><circle cx="57" cy="43" r="1"/></g>
+    <path d="M18 29c2-7 9-11 18-11s16 4 18 11l-3 18c-2 9-8 16-15 20-7-4-13-11-15-20Z" fill="#d8aa82" stroke="#171a16" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M23 37q6-5 12 0-6 6-12 0Zm14 0q6-5 12 0-6 6-12 0Z" fill="#f3eddb" stroke="#171a16" stroke-width="1.2"/>
+    <ellipse cx="29" cy="37" rx="2" ry="3" fill="#d6a52f"/><ellipse cx="43" cy="37" rx="2" ry="3" fill="#d6a52f"/>
+    <circle cx="29" cy="37" r="1" fill="#171a16"/><circle cx="43" cy="37" r="1" fill="#171a16"/>
+    <path d="M24 33q5-3 10 0m4 0q5-3 10 0M36 40l-2 6h4l-2-6Zm-4 11q4-2 8 0" fill="none" stroke="#171a16" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M32 52q4-2 8 0l-4 3Z" fill="#80524a" stroke="#171a16" stroke-width="1"/>
+  ` : monster.name === "Frankenstein" ? `
+    <rect x="7" y="35" width="17" height="7" rx="2" fill="#929a9d" stroke="#171a16" stroke-width="1.8"/>
+    <rect x="48" y="35" width="17" height="7" rx="2" fill="#929a9d" stroke="#171a16" stroke-width="1.8"/>
+    <path d="M12 36v5m4-5v5m40-5v5m4-5v5" stroke="#34363a" stroke-width="1.5"/>
+    <circle cx="20" cy="38.5" r="5" fill="#82bd3e" stroke="#171a16" stroke-width="1.5"/>
+    <circle cx="52" cy="38.5" r="5" fill="#82bd3e" stroke="#171a16" stroke-width="1.5"/>
+    <path d="M20 18 19 29l2 22 2 8q13 5 26 0l2-8 2-22-1-11Z" fill="#82bd3e" stroke="#171a16" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M18 20V7h37v13l-5-3-5 5-6-5-6 5-6-5-5 5Z" fill="#171a16"/>
+    <path d="M24 24l4 2 4-3 4 3 4-3 4 3" fill="none" stroke="#743542" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m25 26 2 3m5-6 2 3m6-3 2 3m4-2 2 3" stroke="#171a16" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M23 34q6-5 12 0-6 8-12 0Zm14 0q6-5 12 0-6 8-12 0Z" fill="#f3eddb" stroke="#171a16" stroke-width="1.5"/>
+    <circle cx="29" cy="34" r="2" fill="#171a16"/><circle cx="43" cy="34" r="2" fill="#171a16"/>
+    <path d="M27 47h18l-2 6H29Z" fill="#171a16"/>
+    <path d="M31 47v5m5-5v5m5-5v5" stroke="#f3eddb" stroke-width="1.3"/>
+  ` : monster.name === "Hexe" ? `
+    <circle cx="36" cy="36" r="29" fill="#ef8a24" stroke="#171a16" stroke-width="1.5"/>
+    <circle cx="36" cy="36" r="25" fill="none" stroke="#ffbd4b" stroke-width="1" opacity=".8"/>
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 56 63 46" stroke="#171a16" stroke-width="4.5"/>
+      <path d="M11 55 62 46" stroke="#a87852" stroke-width="1.5"/>
+    </g>
+    <path d="M12 54 7 50l3 7-6-2 5 6-5 2 8 1 7-6-1-5Z" fill="#211b25" stroke="#171a16" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M31 34c-7 3-10 9-9 15l-8 6 16-1 8-7 10 5 12-6-9-5-2-8-10-3-5 5Z" fill="#211b25" stroke="#171a16" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="m32 43-7 9-7 3 3 3 11-4 8-8m2-4 8 8 7 2-2 4-10-2-11-8Z" fill="#211b25" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M32 20c-6 0-9 5-7 10l5 6 8-1 3-5 7-3-8-2c-1-3-3-5-8-5Z" fill="#211b25" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M14 25q21-8 45-1l-1 4q-23-5-43 2Zm12-3 6-14 13-4-5 10 12 8-7 2Z" fill="#171a16" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M25 26 19 35l7-4m17-4 5 8-6-3" fill="none" stroke="#211b25" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  ` : monster.name === "Werwolf" ? `
+    <circle cx="36" cy="34" r="29" fill="#e7e4dc" stroke="#c7c8c5" stroke-width="1.5"/>
+    <circle cx="22" cy="22" r="4" fill="#d5d4d0"/><circle cx="49" cy="16" r="3" fill="#d5d4d0"/><circle cx="52" cy="43" r="5" fill="#d5d4d0"/><circle cx="24" cy="47" r="2.5" fill="#d5d4d0"/>
+    <path d="M25 38c-7-5-13-7-18-5 4 1 6 4 7 7-5-2-8-2-11 0 6 1 10 4 14 8l11 2Z" fill="#171a16" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M23 36c4-7 11-10 19-8l5 7 7 8 8 6-3 4-12-4-5-6-3 10 6 10h-7l-6-8-4-9-5 9-8 4-4-3 8-9-2-7Z" fill="#171a16" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M40 29c-3-4-4-8-2-12l-1-9 7 5 4-10 3 12 8-3-4 8 5 4-8 3-4 8Z" fill="#171a16" stroke="#171a16" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M49 23q5-4 10-2l-4 4-5 1Z" fill="#e7e4dc"/>
+    <circle cx="48" cy="22" r="1.4" fill="#d6a52f"/>
+    <path d="M45 50 51 53m-23 3-6 2m22 4 4 1" fill="none" stroke="#e7e4dc" stroke-width="1.2" stroke-linecap="round"/>
+  ` : `
+    <path d="M13 27 8 12l15 8c8-5 18-5 26 0l15-8-5 18c4 8 3 19-3 26-5 6-13 9-21 9s-16-3-21-9c-6-7-7-19-1-29Z"/>
+    <path d="M23 37c3-4 8-4 11 0v10c-4 4-8 4-11 0Zm15 0c3-4 8-4 11 0v10c-4 4-8 4-11 0Z" fill="#171a16"/>
+    <path d="m31 53 5 7 5-7" fill="#f3eddb"/>
+  `;
+  return `<svg viewBox="0 0 72 72" role="img" aria-label="${escapeHTML(monster.name)}" style="color:${escapeHTML(monster.color)}">${art}</svg>`;
 }
 
 function render() {
@@ -142,7 +300,7 @@ function renderLobby() {
         <p class="intro">Nur die Monster auf dem Schlachtfeld sind Ziele. Stirbt eines, rückt das nächste sofort nach.</p>
         <div class="field-preview">
           <div class="preview-top"><span>Aktive Monster</span><span>3 Plätze</span></div>
-          <div class="preview-monsters">${sample.map((monster) => `<div class="preview-monster" style="--art-color:${monster.color}"><span class="preview-art">${monsterArt(monster.color)}</span><span><strong>${monster.name}</strong><small>Beute: ${monster.loot.join(", ")}</small></span><span class="preview-hp">${monster.points} ♥</span></div>`).join("")}</div>
+          <div class="preview-monsters">${sample.map((monster) => `<div class="preview-monster" style="--art-color:${monster.color}"><span class="preview-art">${monsterArt(monster)}</span><span><strong>${monster.name}</strong><small>Beute: ${monster.loot.join(", ")}</small></span><span class="preview-hp">${monster.points} ♥</span></div>`).join("")}</div>
           <div class="reserve-preview"><span>Monster in der Reserve</span><strong class="reserve-count">09</strong></div>
         </div>
         <div class="rules-strip"><span><i></i>Dolch immer verfügbar</span><span><i></i>Spezialwaffen als Beute</span><span><i></i>Spielstand lokal gespeichert</span></div>
@@ -202,7 +360,7 @@ function renderNextReserve() {
   const cards = monsters.length ? monsters.map((monster, index) => `
     <article class="next-reserve-card" style="--art-color:${escapeHTML(monster.color)}">
       <span class="next-reserve-index">${String(index + 1).padStart(2, "0")}</span>
-      <span class="next-reserve-art">${monsterArt(monster.color)}</span>
+      <span class="next-reserve-art">${monsterArt(monster)}</span>
       <strong>${escapeHTML(monster.name)}</strong>
       <span class="next-reserve-points">${monster.points} SP</span>
     </article>`).join("") : '<p class="next-reserve-empty">Keine Monster mehr in der Reserve.</p>';
@@ -217,7 +375,7 @@ function monsterCard(monster, index, selectable, selected = false, disabled = fa
   const showHp = state.testMode || (state.phase === "attack" && state.hpPeekPlayers?.includes(state.currentPlanner));
   return `<article class="${classNames}" style="--art-color:${escapeHTML(monster.color)}" ${clickAttrs ? `role="button" tabindex="0" ${clickAttrs}` : ""}>
     <div class="monster-card-top"><span class="monster-position">${String(index + 1).padStart(2, "0")}${frozen}</span>${showHp ? `<span class="monster-hp">${monster.hp} ♥</span>` : ""}</div>
-    <div class="monster-art">${monsterArt(monster.color)}</div>
+    <div class="monster-art">${monsterArt(monster)}</div>
     <div class="monster-card-bottom"><h3 class="monster-name">${escapeHTML(monster.name)}</h3><span class="monster-reward"><b>${monster.points} SP</b>${escapeHTML(monster.loot.join(" · "))}</span></div>
   </article>`;
 }

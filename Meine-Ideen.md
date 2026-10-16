@@ -21,3 +21,7 @@ Die Neuverteilung ersetzt den bisherigen Allianztransfer. Statt einzelner Übert
 - Jedes Allianzmitglied behält mindestens einen Siegpunkt.
 - Die Verteilung wird vor dem Übernehmen ausdrücklich bestätigt.
 - Die Angriffsreihenfolge bleibt während der Punkteverteilung verborgen und wird erst danach angezeigt.
+
+## Individuelle Silhouetten für Monster
+
+Jedes Monster soll eine eigene, gut wiedererkennbare Silhouette erhalten. Die Monster sollen sich bereits durch ihre Außenform, Haltung und markante Merkmale unterscheiden, nicht nur durch ihre Farbe. Auch in der kleinen Darstellung auf dem Spielfeld soll auf den ersten Blick erkennbar sein, welches Monster zu sehen ist. Die konkrete Gestaltung richtet sich nach dem Charakter des jeweiligen Monsters und wird später einzeln ausgearbeitet.
