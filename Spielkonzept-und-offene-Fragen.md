@@ -373,21 +373,24 @@ Sobald diese Punkte geklärt sind, kann die Spiellogik zuverlässig implementier
 Die folgenden Antworten beziehen sich auf die Nummern im Abschnitt **Offene Fragen**. Noch nicht abschließend entschiedene Punkte sind entsprechend gekennzeichnet.
 
 1. Drei Monsterpositionen sind gleichzeitig sichtbar.
-2. Insgesamt befinden sich neun Monster in der Reserve.
+2. Insgesamt befinden sich zwölf Monster im Spiel: drei auf dem Feld und neun in der Reserve.
 3. Die Anzahl der Positionen ist fest.
 4. Die Monster waren als virtuelle Karten gedacht; die Reserve soll durch das Schlachtfeld abgegrenzt werden.
 5. Nein, die Positionen werden nicht frei von den Spielern gewählt.
-6. Die Monster der ersten Version sind: Mumie, Kürbis, Medusa, Vampir, Baum, Sensenmann, Teufel, Hexe und Werwolf.
-7. Die angegebenen Werte sind: Mumie 7, Kürbis 5, Medusa 15, Vampir 6, Baum 9, Sensenmann 16, Teufel 10, Hexe 15 und Werwolf 9. Laut Grundregel entsprechen die Lebenspunkte zu Beginn dem Siegpunktwert.
+6. Die Monster der ersten Version sind in dieser Reihenfolge: Mumie, Kürbis, Geist, Medusa, Vampir, Baum, Sensenmann, Spinne, Teufel, Hexe, Frankenstein und Werwolf.
+7. Die Siegpunkte betragen: Mumie 7, Kürbis 5, Geist 9, Medusa 15, Vampir 10, Baum 9, Sensenmann 16, Spinne 7, Teufel 10, Hexe 15, Frankenstein 12 und Werwolf 9. Die Lebenspunkte entsprechen zu Beginn dem Siegpunktwert. Die Werte für Spinne und Frankenstein sind vorläufige Vorschläge.
 8. Die Beute der Monster ist:
 	- Mumie: Gift und Granate.
 	- Kürbis: Gift.
+	- Geist: Taler und Dynamit (vorläufiger Vorschlag).
 	- Medusa: Taler.
 	- Vampir: Granate.
 	- Baum: Eis und gekreuzte Schwerter.
 	- Sensenmann: gekreuzte Schwerter, Granate und Taler.
+	- Spinne: Gift und Eis (vorläufiger Vorschlag).
 	- Teufel: Eis und Dynamit.
 	- Hexe: Dynamit und Taler.
+	- Frankenstein: Granate und gekreuzte Schwerter (vorläufiger Vorschlag).
 	- Werwolf: Granate.
 9. Nein, Monster haben keine eigenen Spezialfähigkeiten.
 10. Nein. Bei 0 Lebenspunkten ist ein Monster tot.

@@ -2,12 +2,15 @@ const STORAGE_KEY = "halloween-monster-save-v1";
 const MONSTERS = [
   { name: "Mumie", points: 7, loot: ["Gift", "Granate"], color: "#c7a878" },
   { name: "Kürbis", points: 5, loot: ["Gift"], color: "#e58c49" },
+  { name: "Geist", points: 9, loot: ["Taler", "Dynamit"], color: "#b7c9c2" },
   { name: "Medusa", points: 15, loot: ["Taler"], color: "#92a66f" },
-  { name: "Vampir", points: 6, loot: ["Granate"], color: "#c36c66" },
+  { name: "Vampir", points: 10, loot: ["Granate"], color: "#c36c66" },
   { name: "Baum", points: 9, loot: ["Eis", "Gekreuzte Schwerter"], color: "#8d9b74" },
   { name: "Sensenmann", points: 16, loot: ["Gekreuzte Schwerter", "Granate", "Taler"], color: "#b6b8a8" },
+  { name: "Spinne", points: 7, loot: ["Gift", "Eis"], color: "#a98574" },
   { name: "Teufel", points: 10, loot: ["Eis", "Dynamit"], color: "#dc765c" },
   { name: "Hexe", points: 15, loot: ["Dynamit", "Taler"], color: "#9bb0a0" },
+  { name: "Frankenstein", points: 12, loot: ["Granate", "Gekreuzte Schwerter"], color: "#81a38a" },
   { name: "Werwolf", points: 9, loot: ["Granate"], color: "#b38b68" }
 ];
 const WEAPONS = {
@@ -39,7 +42,19 @@ function allianceKey(value) {
 function loadGame() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    return saved && Array.isArray(saved.players) && saved.players.length ? saved : null;
+    if (!saved || !Array.isArray(saved.players) || !saved.players.length) return null;
+    let migrated = false;
+    [...(saved.field ?? []), ...(saved.reserve ?? [])].forEach((monster) => {
+      if (!monster || monster.empty || monster.name !== "Vampir" || monster.points === 10) return;
+      const oldMaxHp = monster.maxHp ?? monster.points;
+      const damageTaken = Math.max(0, oldMaxHp - monster.hp);
+      monster.points = 10;
+      monster.maxHp = 10;
+      monster.hp = Math.max(0, 10 - damageTaken);
+      migrated = true;
+    });
+    if (migrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    return saved;
   } catch {
     return null;
   }
@@ -123,12 +138,12 @@ function renderLobby() {
       </section>
       <aside class="setup-aside">
         <p class="eyebrow">Das Spielfeld</p>
-        <h2>Drei Plätze.<br>Sechs aus der Reserve.</h2>
+        <h2>Drei Plätze.<br>Neun aus der Reserve.</h2>
         <p class="intro">Nur die Monster auf dem Schlachtfeld sind Ziele. Stirbt eines, rückt das nächste sofort nach.</p>
         <div class="field-preview">
           <div class="preview-top"><span>Aktive Monster</span><span>3 Plätze</span></div>
           <div class="preview-monsters">${sample.map((monster) => `<div class="preview-monster" style="--art-color:${monster.color}"><span class="preview-art">${monsterArt(monster.color)}</span><span><strong>${monster.name}</strong><small>Beute: ${monster.loot.join(", ")}</small></span><span class="preview-hp">${monster.points} ♥</span></div>`).join("")}</div>
-          <div class="reserve-preview"><span>Monster in der Reserve</span><strong class="reserve-count">06</strong></div>
+          <div class="reserve-preview"><span>Monster in der Reserve</span><strong class="reserve-count">09</strong></div>
         </div>
         <div class="rules-strip"><span><i></i>Dolch immer verfügbar</span><span><i></i>Spezialwaffen als Beute</span><span><i></i>Spielstand lokal gespeichert</span></div>
       </aside>

@@ -22,7 +22,7 @@ Die Monster werden als geordnete Reserve geführt. Wenn ein Monster vom Schlacht
 - Wird die Liste nach dem Aufbrauchen erneut gestartet oder gemischt?
 - Soll ein Monster in Sonderfällen doch mehrfach vorkommen dürfen, etwa in einer späteren Erweiterung?
 
-**Status**: Behoben. Neue Partien verwenden die feste Reihenfolge der Monsterliste. Jedes der neun Monster kommt genau einmal vor; drei starten auf dem Feld und sechs bleiben in der Reserve. Die Reihenfolge wird nicht mehr zufällig gemischt.
+**Status**: Behoben. Neue Partien verwenden die feste Reihenfolge der Monsterliste. Jedes der zwölf Monster kommt genau einmal vor; drei starten auf dem Feld und neun bleiben in der Reserve. Die Reihenfolge wird nicht mehr zufällig gemischt.
 
 ## 2. Aktuelle Lebenspunkte der Monster sind sichtbar
 
@@ -154,7 +154,7 @@ Die Beute wurde dem Spieler zwar intern gutgeschrieben, aber in der Ergebnisansi
 
 ## Testfälle für die spätere Fehlerbehebung
 
-- Geprüft: Startfolge beginnt mit Mumie, Kürbis und Medusa; als nächste Reserve folgen Vampir, Baum und Sensenmann.
+- Zu prüfen: Startfolge beginnt mit Mumie, Kürbis und Geist; als nächste Reserve folgen Medusa, Vampir und Baum.
 - Noch als vollständiger Spieldurchlauf zu prüfen: bis zum Ende spielen und bestätigen, dass kein Monster ein zweites Mal erscheint.
 - Geprüft: Im normalen Spiel werden keine aktuellen Lebenspunkte angezeigt.
 - Geprüft: Mit aktiviertem Testmodus sind Lebenspunkte sichtbar und der Modus ist während des Spiels markiert.
