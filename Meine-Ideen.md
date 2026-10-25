@@ -25,3 +25,21 @@ Die Neuverteilung ersetzt den bisherigen Allianztransfer. Statt einzelner Übert
 ## Individuelle Silhouetten für Monster
 
 Jedes Monster soll eine eigene, gut wiedererkennbare Silhouette erhalten. Die Monster sollen sich bereits durch ihre Außenform, Haltung und markante Merkmale unterscheiden, nicht nur durch ihre Farbe. Auch in der kleinen Darstellung auf dem Spielfeld soll auf den ersten Blick erkennbar sein, welches Monster zu sehen ist. Die konkrete Gestaltung richtet sich nach dem Charakter des jeweiligen Monsters und wird später einzeln ausgearbeitet.
+
+## Spieler angreifen
+
+Zusätzlich zu den Monstern sollen Spieler angegriffen werden können. Die Regel wird vor dem Spielstart über eine eigene Option ein- oder ausgeschaltet, ähnlich wie der Testmodus. Die Einstellung gilt für die gesamte Partie.
+
+### Angriffsziele und Darstellung
+
+- Jeder Spieler kann andere Spieler angreifen; niemand kann sich selbst als Ziel auswählen.
+- Als Spielerziele gelten ausschließlich die letzten beiden Spieler der aktuellen Angriffsreihenfolge.
+- Jeder Spieler wird in einem eigenen Kasten dargestellt. Die letzten beiden Plätze als mögliche Spielerziele erhalten jeweils einen zusätzlichen äußeren Kasten.
+- Im privaten Angriffsfenster wird unter der Schaltfläche „Angriff verdeckt abgeben“ die gesamte Angriffsreihenfolge angezeigt. Nur die letzten beiden Plätze sind auswählbar; der eigene Spieler und alle anderen Plätze bleiben sichtbar, aber nicht auswählbar. Die Zielbeschränkung wird in der Darstellung nicht zusätzlich kommentiert oder markiert.
+
+### Schaden und Ausscheiden
+
+- Gegen Spieler gelten dieselben Waffenwirkungen wie gegen Monster, einschließlich ihrer besonderen Effekte.
+- Bei einem Spieler entsprechen die Siegpunkte den Lebenspunkten. Sinkt sein Punktestand auf null, scheidet er aus.
+- Der Spieler, der den tödlichen Angriff ausgeführt hat, erhält den Punktestand des Opfers unmittelbar vor dem tödlichen Angriff sowie alle Items des ausgeschiedenen Spielers.
+- Wird ein Spieler vor seinem geplanten Angriff ausgeschaltet, erhält er trotzdem sein geheimes Angriffsfenster. Seine Eingabe wird bei der späteren Auflösung jedoch nicht ausgeführt. So bleibt bis zur Auflösung offen, was er geplant hat.

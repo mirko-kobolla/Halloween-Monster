@@ -90,11 +90,11 @@ Jeder Spieler muss genau einen Angriff für die Runde auswählen. Der Angriff da
 
 Ein Angriff besteht aus:
 
-- einer Zielposition auf dem Schlachtfeld,
+- einer Zielposition auf dem Schlachtfeld oder, falls Spielerangriffe aktiviert sind, einem Spielerziel,
 - einer Waffenkarte,
 - eventuell einem zweiten Ziel bei den gekreuzten Schwertern.
 
-Nur Ziele innerhalb der markierten Doppellinie dürfen angegriffen werden.
+Nur Ziele innerhalb der markierten Doppellinie dürfen angegriffen werden. Bei aktivierten Spielerangriffen wird jeder Platz der Angriffsreihenfolge in einem eigenen Kasten dargestellt. Die letzten beiden Plätze als mögliche Spielerziele erhalten jeweils einen zusätzlichen äußeren Kasten. Im privaten Angriffsfenster sind nur diese beiden Plätze auswählbar; ein Spieler kann sich nicht selbst angreifen.
 
 In der Anwendung gibt jeder Spieler seinen Angriff einzeln ein. Danach wird die Eingabe verborgen, bis alle Spieler ihre Angriffe festgelegt haben.
 
@@ -199,7 +199,7 @@ Wenn ein Monster stirbt:
 
 ## 7. Schaden und Tod
 
-Ein Angriff zieht die Stärke der Waffe von den aktuellen Lebenspunkten des Zielmonsters ab.
+Ein Angriff zieht die Stärke der Waffe von den aktuellen Lebenspunkten des Zielmonsters ab. Bei aktivierten Spielerangriffen gelten die Siegpunkte eines Spielers als seine Lebenspunkte; Waffen und ihre besonderen Effekte wirken gegen Spieler wie gegen Monster.
 
 Wenn die Waffenstärke größer als die verbleibenden Lebenspunkte ist:
 
@@ -209,6 +209,8 @@ Wenn die Waffenstärke größer als die verbleibenden Lebenspunkte ist:
 - Dieser Spieler erhält die Belohnung.
 
 Ein Monster mit 0 Lebenspunkten gilt als tot und darf nicht weiter als lebendes Ziel behandelt werden.
+
+Sinken die Siegpunkte eines Spielers durch einen Angriff auf 0, scheidet er aus. Der Angreifer erhält den Punktestand des Opfers unmittelbar vor dem tödlichen Angriff sowie dessen Items. Ein bereits ausgeschiedener Spieler führt seinen zuvor geheim geplanten Angriff nicht mehr aus; seine Eingabe bleibt bis zur Auflösung verborgen.
 
 ## 8. Spielende und Gewinner
 

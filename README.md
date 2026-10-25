@@ -8,6 +8,7 @@ Ein lokales Pass-and-play-Spiel als statische Web-Anwendung. Es benötigt keinen
 - Bestätigte Neuverteilung aller Siegpunkte innerhalb einer Allianz vor den Angriffen; die Allianzsumme bleibt erhalten und jedes Mitglied behält mindestens einen Siegpunkt.
 - Drei aktive Monsterplätze und eine Vorschau der nächsten bis zu drei Reserve-Monster.
 - Angriffsreihenfolge nach der Punkteverteilung; geheime Angriffsplanung, öffentlich werden nur Tötungen mit Spieler und Todesursache angezeigt.
+- Optionale Spielerangriffe: Ziele sind die letzten beiden Plätze der Angriffsreihenfolge; bei einem tödlichen Treffer gehen die Punkte und Items des Opfers an den Angreifer.
 - Waffen, Beute, Monster-Nachrücken und lokale Speicherung.
 - Reset über „Neue Partie“ in der Kopfzeile.
 
